@@ -1,0 +1,1 @@
+let () = LOG 0 LEVEL DEBUG

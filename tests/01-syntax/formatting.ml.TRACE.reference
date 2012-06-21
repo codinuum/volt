@@ -1,0 +1,44 @@
+let () =
+  (Bolt.Logger.log "Formatting" Bolt.Level.FATAL ~file: "formatting.ml"
+     ~line: 2 ~column: 2 ~properties: [] ~error: None "no parameter";
+   Bolt.Logger.log "Formatting" Bolt.Level.INFO ~file: "formatting.ml"
+     ~line: 3 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "one parameter: %d" 1);
+   Bolt.Logger.log "Formatting" Bolt.Level.ERROR ~file: "formatting.ml"
+     ~line: 4 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "two parameters: %d %s" 1 "abc");
+   Bolt.Logger.log "Formatting" Bolt.Level.DEBUG ~file: "formatting.ml"
+     ~line: 5 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "three parameters: %d %s %f" 1 "abc" 3.);
+   Bolt.Logger.log "Formatting" Bolt.Level.WARN ~file: "formatting.ml"
+     ~line: 6 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "four parameters: %d %s %f %B" 1 "abc" 3. true);
+   Bolt.Logger.log "Formatting" Bolt.Level.TRACE ~file: "formatting.ml"
+     ~line: 7 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "five parameters: %d %s %f %B %c" 1 "abc" 3. true 'x');
+   ())
+  
+let id x = x
+  
+let () =
+  (Bolt.Logger.log "Formatting" Bolt.Level.FATAL ~file: "formatting.ml"
+     ~line: 13 ~column: 2 ~properties: [] ~error: None "no parameter";
+   Bolt.Logger.log "Formatting" Bolt.Level.INFO ~file: "formatting.ml"
+     ~line: 14 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "one parameter: %d" (id 1));
+   Bolt.Logger.log "Formatting" Bolt.Level.ERROR ~file: "formatting.ml"
+     ~line: 15 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "two parameters: %d %s" 1 (id "abc"));
+   Bolt.Logger.log "Formatting" Bolt.Level.DEBUG ~file: "formatting.ml"
+     ~line: 16 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "three parameters: %d %s %f" 1 "abc" (id 3.));
+   Bolt.Logger.log "Formatting" Bolt.Level.WARN ~file: "formatting.ml"
+     ~line: 17 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "four parameters: %d %s %f %B" 1 "abc" 3. (id true));
+   Bolt.Logger.log "Formatting" Bolt.Level.TRACE ~file: "formatting.ml"
+     ~line: 18 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "five parameters: %d %s %f %B %c" 1 "abc" 3. true
+        (id 'x'));
+   ())
+  
+

@@ -1,0 +1,27 @@
+let () =
+  (Bolt.Logger.log "Formatting" Bolt.Level.FATAL ~file: "formatting.ml"
+     ~line: 2 ~column: 2 ~properties: [] ~error: None "no parameter";
+   ();
+   Bolt.Logger.log "Formatting" Bolt.Level.ERROR ~file: "formatting.ml"
+     ~line: 4 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "two parameters: %d %s" 1 "abc");
+   ();
+   ();
+   ();
+   ())
+  
+let id x = x
+  
+let () =
+  (Bolt.Logger.log "Formatting" Bolt.Level.FATAL ~file: "formatting.ml"
+     ~line: 13 ~column: 2 ~properties: [] ~error: None "no parameter";
+   ();
+   Bolt.Logger.log "Formatting" Bolt.Level.ERROR ~file: "formatting.ml"
+     ~line: 15 ~column: 2 ~properties: [] ~error: None
+     (Printf.sprintf "two parameters: %d %s" 1 (id "abc"));
+   ();
+   ();
+   ();
+   ())
+  
+

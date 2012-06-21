@@ -1,0 +1,504 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>Bolt -- version 1.2
+</TITLE>
+
+<META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<META name="GENERATOR" content="hevea 1.10">
+<STYLE type="text/css">
+.li-itemize{margin:1ex 0ex;}
+.li-enumerate{margin:1ex 0ex;}
+.thefootnotes{text-align:left;margin:0ex;}
+.dt-thefootnotes{margin:0em;}
+.dd-thefootnotes{margin:0em 0em 0em 2em;}
+.caption{padding-left:2ex; padding-right:2ex; margin-left:auto; margin-right:auto}
+.title{margin:2ex auto;text-align:center}
+.center{text-align:center;margin-left:auto;margin-right:auto;}
+DIV TABLE{margin-left:inherit;margin-right:inherit;}
+PRE{text-align:left;margin-left:0ex;margin-right:auto;}
+BLOCKQUOTE{margin-left:4ex;margin-right:4ex;text-align:left;}
+TD P{margin:0px;}
+.figure{border-top: thin solid black; border-bottom: thin solid black;}
+.caption{border-bottom: thin solid black;}
+BODY{background:white;}
+.title{padding:1ex;background:white;}
+.titlemain{padding:1ex;background:white;}
+.titlerest{padding:1ex;background:white;}
+.section{padding:.5ex;background:#7F7F7F;}
+.subsection{padding:0.3ex;background:#B2B2B2;}
+.subsubsection{padding:0.5ex;background:#E5E5E5;}
+.ffootnoterule{border:none;margin:1em auto 1em 0px;width:50%;background:#7F7F7F;}
+</STYLE>
+</HEAD>
+<BODY >
+<!--HEVEA command line is: hevea -fix -O -exec /Users/x9c/local/lib/hevea/xxdate.exe -o bolt.html article.hva fancysection.hva bolt.tex -->
+<!--CUT DEF section 1 --><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Bolt &#X2013; version 1.2</H1><H3 CLASS="titlerest">Copyright &#XA9; 2009-2011 Xavier Clerc &#X2013; <A HREF="mailto:bolt@x9c.fr">bolt@x9c.fr</A><BR>
+Released under the LGPL v3</H3><H3 CLASS="titlerest">August&#XA0;15, 2011</H3></TD></TR>
+</TABLE><!--TOC section Introduction-->
+<H2 CLASS="section"><!--SEC ANCHOR -->Introduction</H2><!--SEC END --><P>
+Bolt is a logging tool for the Objective Caml language<SUP><A NAME="text1" HREF="#note1">1</A></SUP>. Its name stems from the following acronym: <I>Bolt is an Ocaml Logging Tool</I>. It is inspired by and modeled after the Apache log4j utlity<SUP><A NAME="text2" HREF="#note2">2</A></SUP>.<BR>
+Bolt provides both a comprehensive library for log production, and a camlp4-based syntax extension that allows to remove log directives. The latter is useful to be able to distribute an executable that incurs no runtime penalty if logging is used only during development.<BR>
+
+The importance of logging is frequently overlooked, but (quite ironically) in the same time, the most used debugging <I>method</I> is by far the <TT>print</TT> statement. Bolt aims at providing Objective Caml developpers with a framework that is comprehensive, yet easy to use. It also tries to leverage the benefits of both compile-time and run-time configuration to produce a flexible library with a manageable computational cost.<BR>
+
+Bolt, in its 1.2&#XA0; version, is designed to work with version 3.12.1&#XA0; of Objective Caml.<BR>
+ Bolt is released under the LGPL version 3.<BR>
+Bugs should be reported at <TT><A HREF="http://bugs.x9c.fr">http://bugs.x9c.fr</A></TT>.</P><!--TOC section Building Bolt-->
+<H2 CLASS="section"><!--SEC ANCHOR -->Building Bolt</H2><!--SEC END --><P>
+Bolt can be built from sources using <TT>make</TT> (in its <TT>GNU Make
+3.81</TT> flavor), and Objective Caml version 3.12.1. No other
+dependency is needed. Following the classical Unix convention, the
+build and installation process consists in these three steps:
+</P><OL CLASS="enumerate" type=1><LI CLASS="li-enumerate">
+<TT>sh configure</TT>
+</LI><LI CLASS="li-enumerate"><TT>make all</TT>
+</LI><LI CLASS="li-enumerate"><TT>make install</TT>
+</LI></OL><P>
+During the first step, one can specify elements if they are not
+correctly inferred by the <TT>./configure</TT> script; the following
+switches are available:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>-ocaml-prefix</TT> to specify the prefix path to the Objective
+Caml installation (usually <TT>/usr/local</TT>);
+</LI><LI CLASS="li-itemize"><TT>-ocamlfind</TT> to specify the path to the <TT>ocamlfind</TT>
+executable (notice that the presence of
+<TT>ocamlfind</TT><SUP><A NAME="text3" HREF="#note3">3</A></SUP> is
+optional, and that the tool is used only at installation if
+present);
+</LI><LI CLASS="li-itemize"><TT>-no-native-dynlink</TT> to disable dynamic linking.
+</LI></UL><P>During the third and last step, according to local settings, it may be
+necessary to acquire privileged accesses, running for example <TT>sudo</TT>
+<TT>make</TT> <TT>install</TT>.</P><P>The Java<SUP><A NAME="text4" HREF="#note4">4</A></SUP> version will be built only if the <TT>ocamljava</TT><SUP><A NAME="text5" HREF="#note5">5</A></SUP> compiler is present and located by the makefile. The syntax extension will be compiled only to bytecode.</P><!--TOC section Using Bolt-->
+<H2 CLASS="section"><!--SEC ANCHOR -->Using Bolt</H2><!--SEC END --><!--TOC subsection Base concepts-->
+<H3 CLASS="subsection"><!--SEC ANCHOR -->Base concepts</H3><!--SEC END --><P>
+The central concept of Bolt is loggers. Loggers have names that are strings composed of dot-separated components; they are thus akin to module names, and it is actually good practice to use the logger <TT>M</TT> to log events of the module <TT>M</TT>. It is possible to register several loggers with the same name; this feature is useful to record the events related to a given module to several different destinations (using possibly different filters, layout, and outputs).<BR>
+
+Logger are also organized into a hierarchy (meaning that logger <TT>P</TT> is a parent of logger <TT>P.S</TT>). When a log statement is executed, it is associated with a logger name. Figure&#XA0;<A HREF="#hierarchy">1</A> shows the hierarchy of loggers for an application using the loggers whose name appears in black. The loggers whose names appear in gray are implicitly added by Bolt in order to have a complete tree of loggers: those actually used in the program are the leaves, and the root is the special <TT>""</TT> logger. The arrows define the is-a-child-of relation.<BR>
+
+</P><BLOCKQUOTE CLASS="figure"><DIV CLASS="center">
+
+<IMG SRC="figures/hierarchy.png">
+
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 1: Example of logger hierarchy.</TD></TR>
+</TABLE></DIV>
+<A NAME="hierarchy"></A>
+</DIV></BLOCKQUOTE><P>Every log event will be presented to all logger with that name, and to all loggers with a parent name. Each logger will decide according to its level and filter if the event should actually be recorded. Finally, all events are presented to all loggers having the special empty name (corresponding to the string <TT>""</TT>). The hierarchy of the loggers is a key feature that allows to easily enable or disable logging for large parts of an application. Figure&#XA0;refdispatch shows how a message initially created for the <TT>Library.PartB.Module</TT> loggers is dispatched to all loggers with parent names, including loggers that are not explicitly used in the application (those whose name appears in gray). The dashed arrows show the order in which the event is presented to the different loggers.<BR>
+
+</P><BLOCKQUOTE CLASS="figure"><DIV CLASS="center">
+
+<IMG SRC="figures/dispatch.png">
+
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 2: Dispatch of an event generated for the &#X201C;<TT>Library.PartB.Module</TT>&#X201D; logger.</TD></TR>
+</TABLE></DIV>
+<A NAME="dispatch"></A>
+</DIV></BLOCKQUOTE><P>Bolt is also based on the following concepts:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<B>Event:</B> the event is the entity built each time the application executes a log statement.
+</LI><LI CLASS="li-itemize"><B>Level:</B> the level characterizes how critical an event is.<BR>
+ An event will be recorded iff its level is below the level of logger.<BR>
+ The levels are, in asending order: <TT>FATAL</TT>, <TT>ERROR</TT>, <TT>WARN</TT>, <TT>INFO</TT>, <TT>DEBUG</TT>, and <TT>TRACE</TT>.
+</LI><LI CLASS="li-itemize"><B>Filter:</B> each logger has an associated filter, ensuring that only the events satistying the filter will be recorded.
+</LI><LI CLASS="li-itemize"><B>Layout:</B> each logger has an associated layout that defines how an event is rendered into a string.
+</LI><LI CLASS="li-itemize"><B>Output:</B> each logger has an associated output that defines where event are actually recorded (two loggers should not have the same destination).
+</LI></UL><!--TOC subsection Linking with the library-->
+<H3 CLASS="subsection"><!--SEC ANCHOR -->Linking with the library</H3><!--SEC END --><P>
+Linking with Bolt is usually done by adding one of the following library to the linking command-line:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>-I +bolt bolt.cma</TT> (for <TT>ocamlc</TT> compiler);
+</LI><LI CLASS="li-itemize"><TT>-I +bolt bolt.cmxa</TT> (for <TT>ocamlopt</TT> compiler);
+</LI><LI CLASS="li-itemize"><TT>-I +bolt bolt.cmja</TT> (for <TT>ocamljava</TT> compiler).
+</LI></UL><P>
+In order, to use Bolt in multithread applications, it is necessary to also link with the <TT>BoltThread</TT> module. This also implies to pass the <TT>-linkall</TT> option to the compiler.</P><!--TOC subsection Adding log statements-->
+<H3 CLASS="subsection"><!--SEC ANCHOR -->Adding log statements</H3><!--SEC END --><P>
+There are two ways to add a log statement: either by calling explicitly the <TT>Bolt.Logger.log</TT> function, or by using the <TT>bolt_pp.cmo</TT> camlp4 syntax extension. One is advised to use the latter method: first, using the syntax extension is lightweight (elements such as line and column are automatically computed); second, it allows to remove the log statements at compilation (it may be useful to have a development version packed with a lot of debug log statements and a distributed version that suffers no runtime penalty related to logging). Moreover, only a given part of log statements may be removed, on a level basis.<BR>
+
+</P><!--TOC subsubsection Explicit logging-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->Explicit logging</H4><!--SEC END --><P>
+To log using the <TT>Bolt.Logger.log</TT> function, one has to call it with the following parameters (<I>cf.&#XA0;</I>code sample&#XA0;<A HREF="#log-explicit">3</A>):
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+a <TT>string</TT> parameter giving the name of the logger to use;
+</LI><LI CLASS="li-itemize">a <TT>Bolt.Level.t</TT> parameter giving the level of the event to log;
+</LI><LI CLASS="li-itemize">an optional <TT>string</TT> parameter (named <I>file</I>) giving the file associated with the log event;
+</LI><LI CLASS="li-itemize">an optional <TT>int</TT> parameter (named <I>line</I>) giving the line number associated with the log event;
+</LI><LI CLASS="li-itemize">an optional <TT>int</TT> parameter (named <I>column</I>) giving the column number associated with the log event;
+</LI><LI CLASS="li-itemize">an optional <TT>(string * string) list</TT> parameter (named <I>properties</I>) giving the property list associated with the log event;
+</LI><LI CLASS="li-itemize">an optional <TT>exn option</TT> parameter (named <I>error</I>) giving the exception associated with the log event;
+</LI><LI CLASS="li-itemize">a <TT>string</TT> parameter giving the message of the log event.
+</LI></UL><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 3: <A NAME="log-explicit"></A>Explicit logging.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+let () =
+  ...
+  Bolt.Logger.log "mylogger" Bolt.Level.DEBUG "some debug info";
+  ...
+</PRE></BLOCKQUOTE><!--TOC subsubsection Implicit logging-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->Implicit logging</H4><!--SEC END --><P>
+To log using the syntax extension, one has to use the Bolt-introduced log expression. This is done by passing the <TT>-pp &#X2019;camlp4o /path/to/bolt_pp.cmo&#X2019;</TT> option to the Objective Caml compiler. The new <TT>LOG</TT> expression can be used in an Objective Caml program wherever an expression of type <TT>unit</TT> is waited. The <SPAN STYLE="font-variant:small-caps">bnf</SPAN> definition of this expression is as follows:<BR>
+
+</P><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=left NOWRAP> <TT><I>log_expr</I> ::= <B>LOG</B> (<I>string</I> | <I>ident</I>) <I>arguments attributes</I> <B>LEVEL</B> <I>level</I></TT></TD></TR>
+<TR><TD ALIGN=left NOWRAP> <TT><I>arguments</I> ::= <I>list of expressions</I> | &#X454;</TT></TD></TR>
+<TR><TD ALIGN=left NOWRAP> <TT><I>attributes</I> ::= <I>attributes attribute</I> | &#X454;</TT></TD></TR>
+<TR><TD ALIGN=left NOWRAP> <TT><I>attribute</I> ::= <B>NAME</B> <I>string</I> | (<B>PROPERTIES</B> | <B>WITH</B>) <I>expr</I> | (<B>EXCEPTION</B> | <B>EXN</B>) <I>expr</I></TT></TD></TR>
+<TR><TD ALIGN=left NOWRAP> <TT><I>level</I> ::= <B>FATAL</B> | <B>ERROR</B> | <B>WARN</B> | <B>INFO</B> | <B>DEBUG</B> | <B>TRACE</B></TT></TD></TR>
+</TABLE><P><BR>
+
+The string following the <TT>LOG</TT> keyword is the message of the log event, it can be either a literal string or an identifier whose type is string. This string can be followed by expressions; in this case the string is interpreted as a <TT>printf</TT> format string, using the following expressions as values for the <TT>%</TT> placeholders of the format string.<BR>
+
+The attributes are optional, and have the following meaning:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>NAME</TT> defines the name of the logger to be used;
+</LI><LI CLASS="li-itemize"><TT>PROPERTIES</TT> defines the properties associated with the log event (the expression should have the type <TT>(string * string) list</TT>);
+</LI><LI CLASS="li-itemize"><TT>EXCEPTION</TT> defines the exception associated with the log event (the expression should have type <TT>exn</TT>).
+</LI></UL><P>
+Code sample&#XA0;<A HREF="#log-implicit">4</A> shows how the expression can be used. Compared to explicit logging through the <TT>Bolt.Logger.log</TT>, when using the <TT>LOG</TT> expression file, line number, and column number are determined automatically.<BR>
+
+When no <TT>NAME</TT> attribute is provided, the logger name is computed from the source file name: the <TT>.ml</TT> suffix is removed and the result is capitalized. More, the <TT>bolt_pp.cmo</TT> syntax extension accepts the following parameters:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>-logger &lt;n&gt;</TT> sets the logger name to <I>n</I> for all <TT>LOG</TT> expressions of the compiled file;
+</LI><LI CLASS="li-itemize"><TT>-for-pack &lt;P&gt;</TT> sets the prefix to the logger names used throughout the compiled file to &#X201C;<TT>P.</TT>&#X201D;.
+</LI></UL><P>Finally, the <TT>bolt_pp.cmo</TT> syntax extension recognizes a third parameter <TT>-level &lt;l&gt;</TT> where <I>l</I> should be either <TT>NONE</TT> or a level. If <I>l</I> is <TT>NONE</TT>, all <TT>LOG</TT> expressions will be removed from the source file; otherwise, only the <TT>LOG</TT> expression with a level inferior or equal to the passed value will be kept.<BR>
+
+</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 4: <A NAME="log-implicit"></A>Implicit logging.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+let () =
+  ...
+  LOG "some debug info" LEVEL DEBUG;
+  ...
+</PRE></BLOCKQUOTE><P>When compiling in <I>unsafe</I> mode, the <TT>-unsafe</TT> switch should be passed to camlp4 instead of the compiler. Indeed, as camlp4 is building a syntax tree that is passed to the compiler, issuing the <TT>-unsafe</TT> switch to the compiler has no effect because it is too late: the code has been built by camlp4 in <I>safe</I> mode. In such a case, the compiler warns the user with the following message: <TT>Warning: option -unsafe used with a preprocessor returning a syntax tree</TT>. The correct command-line switch is hence <TT>-pp &#X2019;camlp4o -unsafe /path/to/bolt_pp.cmo&#X2019;</TT>.</P><!--TOC subsection Configuring log-->
+<H3 CLASS="subsection"><!--SEC ANCHOR -->Configuring log</H3><!--SEC END --><P>
+There are two ways to configure log, that is to register loggers that will handle the log events produced by the application. The first way is to explicitly call <TT>Bolt.Logger.register</TT> while the second one is to use a configuration file that will be interpreted by Bolt at runtime.<BR>
+
+To register (<I>i.e.&#XA0;</I>to create) a logger using the <TT>Bolt.Logger.register</TT> function, one has to call it with the following parameters:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+a <TT>string</TT> parameter giving the name of the logger;
+</LI><LI CLASS="li-itemize">a <TT>Bolt.Level.t</TT> parameter giving the maximum level for events to be logged;
+</LI><LI CLASS="li-itemize">a <TT>string</TT> parameter giving the filter of the logger;
+</LI><LI CLASS="li-itemize">a <TT>string</TT> parameter giving the layout of the logger;
+</LI><LI CLASS="li-itemize">a <TT>string</TT> parameter giving the output of the logger;
+</LI><LI CLASS="li-itemize">a <TT>string * float option</TT> couple that gives the parameters used for output creation: the first component is the name of the output while the second one is the optional rotate value (the actual semantics of both component is dependent on the actual output used).
+</LI></UL><P>To register a logger using a configuration file, one should set the <TT>BOLT_FILE</TT> environment variable to the path of the configuration file. If the configuration file cannnot be loaded, an error message is written on the standard error unless the <TT>BOLT_SILENT</TT> environment variable is set to either &#X201C;YES&#X201D; or &#X201C;ON&#X201D; (defaulting to &#X201C;OFF&#X201D;, case being ignored).<BR>
+
+The format of the configuration file is as follows:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+the format is line-oriented;
+</LI><LI CLASS="li-itemize">comments start with the &#X2019;#&#X2019; character and end at the end of the line;
+</LI><LI CLASS="li-itemize">sections start with a line of the form <TT>[a.b.c]</TT>, "a.b.c" being the name of the section;
+</LI><LI CLASS="li-itemize">a section ends when a new section starts;
+</LI><LI CLASS="li-itemize">at the beginning of the file, the section named "" is currently opened;
+</LI><LI CLASS="li-itemize">section properties are defined by lines of the form "key=value";
+</LI><LI CLASS="li-itemize">others lines should be empty (only populated with whitespaces and comments).
+</LI></UL><P>Each section defines a logger whose name is the section name. The following properties are used to customize the logger:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>level</TT> defines the level of the logger;
+</LI><LI CLASS="li-itemize"><TT>filter</TT> defines the filter of the logger;
+</LI><LI CLASS="li-itemize"><TT>layout</TT> defines the layout of the logger;
+</LI><LI CLASS="li-itemize"><TT>output</TT> defines the output of the logger;
+</LI><LI CLASS="li-itemize"><TT>name</TT> is the first parameter passed to create the actual output;
+</LI><LI CLASS="li-itemize"><TT>rotate</TT> is the second parameter passed to create the actual output.
+</LI></UL><P>
+The level can have one of the following values: <TT>TRACE</TT>, <TT>DEBUG</TT>, <TT>INFO</TT>, <TT>WARN</TT>, <TT>ERROR</TT>, <TT>FATAL</TT>. The possible values for the other properties are discussed in the following sections.</P><P>Code sample&#XA0;<A HREF="#config_file">5</A> examplifies a typical configuration file. It defines three loggers (with names &#X201C;&#X201D;, &#X201C;<TT>Pack.Main</TT>&#X201D;, and &#X201C;<TT>Pack.Aux</TT>&#X201D;). When executed, the application will produce three files &#X201C;<TT>bymodule.result</TT>&#X201D;, &#X201C;<TT>bymodule1.result</TT>&#X201D;, and &#X201C;<TT>bymodule2.result</TT>&#X201D;: the first file will contain the log information for the whole application while the other ones will contain respectively the log information associated with the &#X201C;<TT>Pack.Main</TT>&#X201D; and &#X201C;<TT>Pack.Aux</TT>&#X201D; loggers.
+</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 5: <A NAME="config_file"></A>Example of configuration file.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+level=trace
+filter=all
+layout=simple
+output=file
+name=bymodule.result
+
+[Pack.Main]
+level=trace
+filter=all
+layout=simple
+output=file
+name=bymodule1.result
+
+[Pack.Aux]
+level=trace
+filter=all
+layout=simple
+output=file
+name=bymodule2.result
+</PRE>
+</BLOCKQUOTE><!--TOC subsubsection Predefined filters-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->Predefined filters</H4><!--SEC END --><P>
+The following filters are predefined:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>all</TT> keeps all events;
+</LI><LI CLASS="li-itemize"><TT>none</TT> keeps no event;
+</LI><LI CLASS="li-itemize"><TT>trace_or_below</TT> keeps events with level inferior or equal to <TT>TRACE</TT>;
+</LI><LI CLASS="li-itemize"><TT>debug_or_below</TT> keeps events with level inferior or equal to <TT>DEBUG</TT>;
+</LI><LI CLASS="li-itemize"><TT>info_or_below</TT> keeps events with level inferior or equal to <TT>INFO</TT>;
+</LI><LI CLASS="li-itemize"><TT>warn_or_below</TT> keeps events with level inferior or equal to <TT>WARN</TT>;
+</LI><LI CLASS="li-itemize"><TT>error_or_below</TT> keeps events with level inferior or equal to <TT>ERROR</TT>;
+</LI><LI CLASS="li-itemize"><TT>fatal_or_below</TT> keeps events with level inferior or equal to <TT>FATAL</TT>;
+</LI><LI CLASS="li-itemize"><TT>file_defined</TT> keeps events with an actual filename;
+</LI><LI CLASS="li-itemize"><TT>file_undefined</TT> keeps events with no filename;
+</LI><LI CLASS="li-itemize"><TT>line_defined</TT> keeps events with a strictly positive line number;
+</LI><LI CLASS="li-itemize"><TT>line_undefined</TT> keeps events with a negative or null line number;
+</LI><LI CLASS="li-itemize"><TT>column_defined</TT> keeps events with a strictly positive column number;
+</LI><LI CLASS="li-itemize"><TT>column_undefined</TT> keeps events with a negative or null column number;
+</LI><LI CLASS="li-itemize"><TT>message_defined</TT> keeps events with a non-empty message;
+</LI><LI CLASS="li-itemize"><TT>message_undefined</TT> keeps events with an empty message;
+</LI><LI CLASS="li-itemize"><TT>properties_empty</TT> keeps events with an empty property list;
+</LI><LI CLASS="li-itemize"><TT>properties_not_empty</TT> keeps events with an non-empty property list;
+</LI><LI CLASS="li-itemize"><TT>exception_some</TT> keeps events with an exception;
+</LI><LI CLASS="li-itemize"><TT>exception_none</TT> keeps events with no exception.
+</LI></UL><!--TOC subsubsection Predefined layouts-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->Predefined layouts</H4><!--SEC END --><P>
+Bolt predefines the following non-configurable layouts:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>simple</TT> with format: <TT>LEVEL - MESSAGE</TT>;
+</LI><LI CLASS="li-itemize"><TT>default</TT> with format: <TT>TIME [FILE LINE] LEVEL MESSAGE</TT>;
+</LI><LI CLASS="li-itemize"><TT>paje</TT>, and <TT>paje_noheader</TT> whose format is the Paj&#XE9; trace format<SUP><A NAME="text6" HREF="#note6">6</A></SUP> (the two format only differ in that the latter one does not output definitions, which is useful when one wants to merge several files);
+</LI><LI CLASS="li-itemize"><TT>daikon_decls</TT>, and <TT>daikon_trace</TT> that respectively follow Daikon<SUP><A NAME="text7" HREF="#note7">7</A></SUP> declaration (<I>i.e.&#XA0;</I>program points, and associated variable types) and trace format (<I>i.e.&#XA0;</I>actual variable values for the various program points visits);
+</LI><LI CLASS="li-itemize"><TT>html</TT> whose format is <SPAN STYLE="font-variant:small-caps">html</SPAN>, storing events into a table;
+</LI><LI CLASS="li-itemize"><TT>xml</TT>, or <TT>log4j</TT> whose format is <SPAN STYLE="font-variant:small-caps">xml</SPAN> (compatible with log4j).
+</LI></UL><!--TOC paragraph Paj&#XE9; layouts-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Paj&#XE9; layouts</H5><!--SEC END --><P>&#XA0;<BR>
+The Paj&#XE9; layout support the file format as defined at <TT><A HREF="https://gforge.inria.fr/projects/paje/">https://gforge.inria.fr/projects/paje/</A></TT>; however, Bolt does not support the extensibility feature of the Paj&#XE9; format. This means that only the kinds of events predefined by the standard are available. Nevertheless, it is still possible to add new fields to predefined events.<BR>
+Code sample&#XA0;<A HREF="#paje-example">6</A> shows how the functions from the <TT>Paje</TT> module could be used to record the fact that a container <I>cnt</I> change its state when receiving and handling a mail. The full list of supported event can be found in the ocamldoc of the <TT>Paje</TT> module.</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 6: <A NAME="paje-example"></A>Paj&#XE9; example.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+LOG Paje.t
+  PROPERTIES Paje.new_event ~typ:"mail" ~container:"cnt" ~value:msg []
+  LEVEL TRACE;
+LOG Paje.t
+  PROPERTIES Paje.set_state ~typ:"state" ~container:"cnt" ~value:"computing" []
+  LEVEL TRACE;
+(...)
+LOG Paje.t
+  PROPERTIES Paje.set_state ~typ:"state" ~container:"cnt" ~value:"waiting" []
+  LEVEL TRACE;
+</PRE></BLOCKQUOTE><!--TOC paragraph Daikon layouts-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Daikon layouts</H5><!--SEC END --><P>&#XA0;<BR>
+When using the Daikon tool, one is usually interested in having both the declaration and the traces for the program to analyze. As a result, the configuration file is similar to the one depicted in&#XA0;<A HREF="#daikon-conf">7</A>. The program to be analyzed should itself contain log statement to record information to be fed to the Daikon analyzer. Program&#XA0;<A HREF="#daikon-program">8</A> shows a simple program producing Daikon data.<BR>
+
+The result of Daikon analysis with the aforementioned log configuration and program will be the following:
+</P><PRE CLASS="verbatim">===========================================================================    
+f:::ENTER
+===========================================================================
+f:::EXIT1
+"x" == orig("x")
+"res" one of { 0, 1 }
+"res" &lt;= "x"
+</PRE><P>Each Daikon-related element should use <TT>Daikon.t</TT> as the log message, and one of the property-building functions from the <TT>Daikon</TT> module to build a list of element. As of version 1.2, these functions are:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>enter</TT> that is used to mark the start of a function, giving its name and parameters;
+</LI><LI CLASS="li-itemize"><TT>exit</TT> that is used to mark the end of a function, giving its name, return value and parameters;
+</LI><LI CLASS="li-itemize"><TT>point</TT> that can be used to mark any point in a program, associating it with a list of values.
+</LI></UL><P>Values, independently of their <I>kind</I> (parameters, return values, bare variables) are encoded using a variable-build function from the <TT>Daikon</TT> module. All these functions take as first parameter the name of the value, and as second parameter the value itself. As of version 1.2, they are:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<I><TT>t</TT></I> for type <I>t</I>;
+</LI><LI CLASS="li-itemize"><TT><I>t</I>_list</TT> for type <I>t</I> <TT>list</TT>;
+</LI><LI CLASS="li-itemize"><TT><I>t</I>_array</TT> for type <I>t</I> <TT>array</TT>;
+</LI></UL><P>
+where <I>t</I> is one of <TT>bool</TT>, <TT>int</TT>, <TT>float</TT>, or <TT>string</TT>.</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 7: <A NAME="daikon-conf"></A>Daikon configuration.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+[]
+level=trace
+filter=all
+layout=daikon_decls
+output=file
+name=daikon.decls
+
+[]
+level=trace
+filter=all
+layout=daikon_dtrace
+output=file
+name=daikon.dtrace
+</PRE></BLOCKQUOTE><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 8: <A NAME="daikon-program"></A>Daikon-instrumented program.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+ let f x =
+  LOG Daikon.t
+    WITH Daikon.enter "f" [Daikon.int "x" x] LEVEL TRACE;
+  let res = (x * x) mod 2 in
+  LOG Daikon.t
+    WITH Daikon.exit "f" (Daikon.int "res" res) [Daikon.int "x" x] LEVEL TRACE;
+  res
+
+let () =
+  let l = [1; 2; 3; 4; 5; 6; 7; 8; 9; 10] in
+  let l = List.map f l in
+  List.iter (Printf.printf "%d\n") l
+</PRE></BLOCKQUOTE><!--TOC paragraph Pattern and comma-separated layouts-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Pattern and comma-separated layouts</H5><!--SEC END --><P>&#XA0;<BR>
+Two other layouts are predefined:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>pattern</TT> whose actual format is specified by defining a property named <TT>pattern</TT><BR>
+ This property is a string that can contain <TT>$(x)</TT> elements where <I>x</I> is a key (defined below) or <TT>$(x:n)</TT> where <I>x</I> is a key and <I>n</I> is a padding instruction (the absolute value of <I>n</I> is the total width; the padding is left is <I>n</I> is negative, and right if <I>n</I> is positive)<BR>
+ it is also possible to specify through the <TT>pattern-header-file</TT> (respectively <TT>pattern-footer-file</TT>) property the name of a file whose contents is used as the header (respectively footer) that is written at start/end as well as at each rotation
+</LI><LI CLASS="li-itemize"><TT>csv</TT> whose actual format is specified by properties named <TT>csv-separator</TT> and <TT>csv-elements</TT><BR>
+ <TT>csv-separator</TT> is the string to be used as the separator between values<BR>
+ <TT>csv-elements</TT> is a whitespace-separated list of the keys of the values to render
+</LI></UL><P>The following keys are available for use by the <TT>pattern</TT> and <TT>csv</TT> layouts:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>id</TT> event identifier;
+</LI><LI CLASS="li-itemize"><TT>hostname</TT> host name of running program;
+</LI><LI CLASS="li-itemize"><TT>process</TT> process identifier of running program (<I>i.e.&#XA0; pid</I>);
+</LI><LI CLASS="li-itemize"><TT>thread</TT> thread identifier;
+</LI><LI CLASS="li-itemize"><TT>sec</TT> seconds of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>min</TT> minutes of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>hour</TT> hour of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>mday</TT> day of month of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>month</TT> month of year of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>year</TT> year of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>wday</TT> day of week of event timestamp;
+</LI><LI CLASS="li-itemize"><TT>time</TT> event timestamp;
+</LI><LI CLASS="li-itemize"><TT>relative</TT> time elapsed between initilization and event creation;
+</LI><LI CLASS="li-itemize"><TT>level</TT> event level;
+</LI><LI CLASS="li-itemize"><TT>logger</TT> event logger;
+</LI><LI CLASS="li-itemize"><TT>origin</TT> first logger that received the event;
+</LI><LI CLASS="li-itemize"><TT>file</TT> event file;
+</LI><LI CLASS="li-itemize"><TT>filebase</TT> event file (without directory information);
+</LI><LI CLASS="li-itemize"><TT>line</TT> event line;
+</LI><LI CLASS="li-itemize"><TT>column</TT> event column;
+</LI><LI CLASS="li-itemize"><TT>message</TT> event message;
+</LI><LI CLASS="li-itemize"><TT>properties</TT> property list of event (formatted as ["[k1: v1; ...; kn: vn]"]);
+</LI><LI CLASS="li-itemize"><TT>exception</TT> event exception;
+</LI><LI CLASS="li-itemize"><TT>backtrace</TT> event exception backtrace.
+</LI></UL><!--TOC subsubsection Predefined outputs-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->Predefined outputs</H4><!--SEC END --><P>
+There are three predefined outputs, namely <TT>void</TT>, <TT>growlnotify</TT><SUP><A NAME="text8" HREF="#note8">8</A></SUP>, and <TT>file.</TT> The <TT>void</TT> output discards all data. The <TT>file</TT> output writes data to a bare file, the <TT>name</TT> property (or the <TT>string</TT> value when using <TT>Bolt.Logger.register</TT>) defines the path of the file to be used<SUP><A NAME="text9" HREF="#note9">9</A></SUP>, and the <TT>rotate</TT> property (or the <TT>float option</TT> value when using <TT>Bolt.Logger.register</TT>) gives the rates in seconds at which files will be rotated. It is also possible to use the <TT>signal</TT> property (set to one one the following values: <TT>SIGHUP</TT>, <TT>SIGUSR1</TT>, <TT>SIGUSR2</TT>) in order to request rotation upon signal reception.<BR>
+
+When using rotation or several program instances in parallel, it is convenient for the name to contain a piece of information ensuring that the file name will be unique; otherwise, the same file will be written over and over again. In version 1.0, Bolt supported the <TT>%</TT> special character that was substituted by a timestamp.
+Since version 1.1, Bolt additionally supports a more general <TT>$(key)</TT> substitution mechanism with the following keys:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>time</TT> as a bare alternative to <TT>%</TT>;
+</LI><LI CLASS="li-itemize"><TT>pid</TT> that designates the process identifier;
+</LI><LI CLASS="li-itemize"><TT>hostname</TT> that designates the process hostname (useful when using a shared file system);
+</LI><LI CLASS="li-itemize"><I>var</I> that designates any environment variable available from the process. 
+</LI></UL><!--TOC subsection Reviewing log-->
+<H3 CLASS="subsection"><!--SEC ANCHOR -->Reviewing log</H3><!--SEC END --><P>
+Once the log information has been produced by the application, the developper and/or the user will have to review it. Although this can easily be done using classical Unix commands (such as <TT>grep</TT>, <TT>cut</TT>, <TT>sed</TT>; <I>etc</I>), a dedicated tool such as a GUI can be helpful. For this reason, the XML layout of Bolt produces log4j-compatible XML files allowing the use of the Apache Chainsaw application<SUP><A NAME="text10" HREF="#note10">10</A></SUP>.<BR>
+Code sample&#XA0;<A HREF="#chainsaw">9</A> shows a XML file that could be used to wrap the XML data produced by Bolt (in <TT>bolt.xml</TT> file) in such a way that Chainsaw can load it. This code sample is a reproduction of the one provided in the Javadoc of the log4j <TT>org.apache.log4j.xml.XMLLayout</TT> class<SUP><A NAME="text11" HREF="#note11">11</A></SUP>.
+</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 9: <A NAME="chainsaw"></A>Wrapping produced XML data into a Chainsaw-compatible XML.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+&lt;?xml version="1.0"?&gt;
+
+&lt;!DOCTYPE log4j:eventSet SYSTEM "log4j.dtd" [&lt;!ENTITY data SYSTEM "bolt.xml"&gt;]&gt;
+
+&lt;log4j:eventSet version="1.2" xmlns:log4j="http://jakarta.apache.org/log4j/"&gt;
+        &amp;data;
+&lt;/log4j:eventSet&gt;
+</PRE></BLOCKQUOTE><!--TOC section Complete example-->
+<H2 CLASS="section"><!--SEC ANCHOR -->Complete example</H2><!--SEC END --><P>
+Code sample&#XA0;<A HREF="#example_source">10</A> shows a short program using the implicit logging feature of Bolt. The program can be compiled and executed by the Makefile shown by code sample&#XA0;<A HREF="#example_makefile">11</A>.
+The <TT>compile</TT> target underlines that compilation should be done through the Bolr preprocessor,
+and that link entails references to the <TT>str</TT>, <TT>unix</TT>, and <TT>dynlink</TT> libraries (all of them being shipped with the standard Objective Caml distribution).<BR>
+
+</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 10: <A NAME="example_source"></A>Source example.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+let funct n =
+  LOG "funct(%d)" n LEVEL DEBUG;
+  for i = 1 to n do
+    print_endline "..."
+  done
+
+let () =
+  LOG "application start" LEVEL TRACE;
+  funct 3;
+  funct 7;
+  LOG "application end" LEVEL TRACE
+</PRE>
+</BLOCKQUOTE><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 11: <A NAME="example_makefile"></A>Makefile example.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+DEPENDENCIES=str.cma unix.cma dynlink.cma
+
+default: clean compile run view
+
+clean:
+        rm -f *.cm* log bytecode
+
+compile:
+        ocamlc -c -I +bolt bolt.cma \
+            -pp 'camlp4o path/to/bolt/bolt_pp.cmo' source.ml
+        ocamlc -o bytecode -I +bolt $(DEPENDENCIES) bolt.cma source.cmo
+
+run:
+        BOLT_FILE=config ./bytecode
+
+view:
+        cat log
+</PRE>
+</BLOCKQUOTE><P>The target <TT>run</TT> of the Makefile shows that the environment variable <TT>BOLT_FILE</TT> should be set to the path of the configuration file defining the actual runtime-configuration of logging. The related configuration file is represented by code sample&#XA0;<A HREF="#example_config">12</A>. As a result of execution, a plain text file named <TT>log</TT> will be produced, and can be viewed using the <TT>view</TT> target of the Makefile.</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 12: <A NAME="example_config"></A>Configuration example.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+level=trace
+filter=all
+layout=default
+output=file
+name=log
+</PRE>
+</BLOCKQUOTE><!--TOC section Customizing Bolt-->
+<H2 CLASS="section"><!--SEC ANCHOR -->Customizing Bolt</H2><!--SEC END --><P>
+It is possible to customize Bolt by defining new filters, layouts, and outputs. This is easily done by using respectively the <TT>Bolt.Filter.register</TT>, <TT>Bolt.Layout.register</TT>, and <TT>Bolt.Output.register</TT> functions. More information about the actual types of these functions can be found in the <TT>ocamldoc</TT>-generated documentation (available in the <TT>ocamldoc</TT> directory, generation being triggered by the <TT>make html-doc</TT> command).<BR>
+
+When custom elements have been registered using the previously mentioned functions, they can be used from the configuration files or from the <TT>Bolt.Logger.register</TT> function. However, it is necessary for the custom elements to be registered before <I>any</I> log event concerned with theses custom elements is built. Otherwise, elements won&#X2019;t be found and Bolt will resort to default values.<BR>
+
+A good practice is to define the new filters, layouts, and outputs in modules that are not part of the application. One should not forget to pass the <TT>-linkall</TT> switch to the compilers when linking such modules. Another option is to avoid linking these modules with the application, and to use the <TT>BOLT_PLUGINS</TT> environment variable to load them. The <TT>BOLT_PLUGINS</TT> environment variable contains a comma-separated list of files that will be loaded through <TT>Dynlink</TT>.<BR>
+
+Code sample&#XA0;<A HREF="#customize">13</A> shows how to register a new filter that keeps only event with an even line number, and a new layout programmed using the <TT>Printf.sprintf</TT> machinery.
+</P><BLOCKQUOTE CLASS="figure">
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Code sample 13: <A NAME="customize"></A>Customizing Bolt with new filter and layout.</TD></TR>
+</TABLE></DIV>
+<PRE CLASS="verbatim">
+let () =
+  Bolt.Filter.register
+    "myfilter"
+    (fun e -&gt; (e.Bolt.Event.line mod 2) = 0)
+
+let () =
+  Bolt.Layout.register
+    "mylayout"
+    ([],
+     [],
+     (fun e -&gt;
+       Printf.sprintf "file \"%s\" says \"%s\" with level \"%s\" (line: %d)"
+         e.Bolt.Event.file
+         e.Bolt.Event.message
+         (Bolt.Level.to_string e.Bolt.Event.level)
+         e.Bolt.Event.line))
+</PRE>
+</BLOCKQUOTE><!--BEGIN NOTES document-->
+<HR CLASS="ffootnoterule"><DL CLASS="thefootnotes"><DT CLASS="dt-thefootnotes">
+<A NAME="note1" HREF="#text1">1</A></DT><DD CLASS="dd-thefootnotes">The official Caml website can be reached at <TT><A HREF="http://caml.inria.fr">http://caml.inria.fr</A></TT> and contains the full development suite (compilers, tools, virtual machine, <I>etc.</I>) as well as links to third-party contributions.
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note2" HREF="#text2">2</A></DT><DD CLASS="dd-thefootnotes"><TT><A HREF="http://logging.apache.org/log4j">http://logging.apache.org/log4j</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note3" HREF="#text3">3</A></DT><DD CLASS="dd-thefootnotes">Findlib, a library manager for
+Objective Caml, is available at <TT><A HREF="http://projects.camlcity.org/projects/findlib.html">http://projects.camlcity.org/projects/findlib.html</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note4" HREF="#text4">4</A></DT><DD CLASS="dd-thefootnotes">The official website for the Java Technology can be reached at <TT><A HREF="http://java.sun.com">http://java.sun.com</A></TT>.
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note5" HREF="#text5">5</A></DT><DD CLASS="dd-thefootnotes">Ojective Caml compiler generating Java bytecode, by the same author&#XA0;&#X2013;&#XA0;<TT><A HREF="http://ocamljava.x9c.fr">http://ocamljava.x9c.fr</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note6" HREF="#text6">6</A></DT><DD CLASS="dd-thefootnotes"><TT><A HREF="http://sourceforge.net/projects/paje/">http://sourceforge.net/projects/paje/</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note7" HREF="#text7">7</A></DT><DD CLASS="dd-thefootnotes"><TT><A HREF="http://groups.csail.mit.edu/pag/daikon/">http://groups.csail.mit.edu/pag/daikon/</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note8" HREF="#text8">8</A></DT><DD CLASS="dd-thefootnotes">Command-line utility associated with the Growl program available at <TT><A HREF="http://growl.info/">http://growl.info/</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note9" HREF="#text9">9</A></DT><DD CLASS="dd-thefootnotes">Two special filenames are recognized: <TT>&lt;stdout&gt;</TT> for standard output, and <TT>&lt;stderr&gt;</TT> for standard error.
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note10" HREF="#text10">10</A></DT><DD CLASS="dd-thefootnotes"><TT><A HREF="http://logging.apache.org/chainsaw/">http://logging.apache.org/chainsaw/</A></TT>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note11" HREF="#text11">11</A></DT><DD CLASS="dd-thefootnotes"><TT><A HREF="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/XMLLayout.html">http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/XMLLayout.html</A></TT>
+</DD></DL>
+<!--END NOTES-->
+<!--CUT END -->
+<!--HTMLFOOT-->
+<!--ENDHTML-->
+<!--FOOTER-->
+<HR SIZE=2><BLOCKQUOTE CLASS="quote"><EM>This document was translated from L<sup>A</sup>T<sub>E</sub>X by
+<A HREF="http://hevea.inria.fr/index.html">H<FONT SIZE=2><sup>E</sup></FONT>V<FONT SIZE=2><sup>E</sup></FONT>A</A>.</EM></BLOCKQUOTE></BODY>
+</HTML>

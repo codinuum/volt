@@ -1,0 +1,1 @@
+let () = LOG "msg" PROPERTIES 0 LEVEL DEBUG

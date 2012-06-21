@@ -1,0 +1,13 @@
+description="logging tool"
+requires="camlp4,unix,str,dynlink"
+version="1.2"
+
+archive(syntax,preprocessor)="bolt_pp.cmo"
+
+archive(byte)="bolt.cma"
+archive(native)="bolt.cmxa"
+archive(java)="bolt.cmja"
+
+archive(byte,mt)="bolt.cma boltThread.cmo"
+archive(native,mt)="bolt.cmxa boltThread.cmx"
+archive(java,mt)="bolt.cmja boltThread.cmj"

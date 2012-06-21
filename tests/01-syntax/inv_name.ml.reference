@@ -1,0 +1,4 @@
+File "inv_name.ml", line 1, characters 13-18:
+Parse error: [attr] expected after [expr] (in [expr])
+File "inv_name.ml", line 1, characters 0-1:
+Error: Preprocessor error

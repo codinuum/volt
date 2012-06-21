@@ -1,0 +1,3 @@
+File "inv_properties.ml", line 1, characters 30-31:
+Error: This expression has type int but an expression was expected of type
+         (string * string) list

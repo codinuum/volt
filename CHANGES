@@ -1,0 +1,44 @@
+Version 1.2 (2011-08-15):
+-------------------------
+  - update for Objective Caml 3.12.1
+  - support for Daikon layout
+  - enhanced support for Paje layout
+  - file rotation can now be requested on signal reception (SIGHUP, SIGUSR1, or
+    SIGUSR2) using the 'signal' key in the configuration file
+  - syntax extension: possibility to use an identifier as the 'LOG' message
+  - syntax extension: 'WITH' and 'EXN' as synonyms for respectively 'PROPERTIES'
+    and 'EXCEPTION'
+  - some code factorization
+  - bug #69: dynamic logger names will not be supported (design choice)
+
+Version 1.1 (2011-02-06):
+-------------------------
+  - update for Objective Caml 3.12.0
+  - new build system (ocamlbuild-based)
+  - reorganization of 'src' directory
+  - code refactoring
+  - enhanced manual
+  - new 'hostname', 'process' and 'origin' properties added to events
+  - enhanced support for name of 'file' output
+  - support for Growl output (visual notifications for Mac OS X)
+  - preliminary support for Paje layout (trace format for parallel programs)
+  - bug #51: unportable use of 'which'
+  - bug #52: thread-compatibility module does not compile
+  - bug #53: printf-like messages support at most 2 arguments
+  - bug #54: META file does not contain all dependencies
+  - bug #55: preprocessor de-parenthesizes first argument
+  - bug #56: tests fail if 'ocamljava' is not present
+
+Version 1.0 (2009-12-17):
+-------------------------
+  - switch to OCaml 3.11.1
+  - support for multithread applications
+  - support for plugins
+  - support for printf-like notation in "LOG" statements
+  - support for ocamlfind installation
+  - various minor fixes
+
+Version 1.0-beta (2009-05-31):
+------------------------------
+  - first public version
+

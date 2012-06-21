@@ -1,0 +1,42 @@
+INFO  - entering 'f2'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+INFO  - leaving 'f2'
+INFO  - entering 'f2'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+INFO  - leaving 'f2'
+INFO  - entering 'f2'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+TRACE - inside 'f2' loop
+INFO  - entering 'f1'
+INFO  - leaving 'f1'
+INFO  - leaving 'f2'

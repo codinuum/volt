@@ -1,0 +1,39 @@
+let main () =
+  (Bolt.Logger.log "Simple" Bolt.Level.TRACE ~file: "simple.ml" ~line: 2
+     ~column: 2 ~properties: [] ~error: None "entering main";
+   if (Array.length Sys.argv) = 0
+   then
+     Bolt.Logger.log "Simple" Bolt.Level.WARN ~file: "simple.ml" ~line: 4
+       ~column: 4 ~properties: [] ~error: None
+       (Printf.sprintf "no %s" "argument")
+   else ();
+   for i = 1 to pred (Array.length Sys.argv) do
+     (try
+        (Bolt.Logger.log "Simple" Bolt.Level.DEBUG ~file: "simple.ml"
+           ~line: 7 ~column: 6 ~properties: [] ~error: None
+           "getting variable ";
+         print_endline (Sys.getenv Sys.argv.(i)))
+      with
+      | Not_found ->
+          Bolt.Logger.log "Simple" Bolt.Level.ERROR ~file: "simple.ml"
+            ~line: 11 ~column: 8
+            ~properties: (let open Bolt in [ ("var", (Sys.argv.(i))) ])
+            ~error: None "undefined variable")
+   done;
+   Bolt.Logger.log "Simple" Bolt.Level.TRACE ~file: "simple.ml" ~line: 13
+     ~column: 2 ~properties: [] ~error: None "leaving main")
+  
+let () =
+  (Bolt.Logger.log "App" Bolt.Level.INFO ~file: "simple.ml" ~line: 16
+     ~column: 2 ~properties: [] ~error: None "start ...";
+   (try main ()
+    with
+    | e ->
+        (Bolt.Logger.log "Simple" Bolt.Level.FATAL ~file: "simple.ml"
+           ~line: 20 ~column: 4 ~properties: [] ~error: (Some e)
+           "uncaught exception";
+         Printexc.print_backtrace stdout));
+   Bolt.Logger.log "App" Bolt.Level.INFO ~file: "simple.ml" ~line: 22
+     ~column: 2 ~properties: [] ~error: None "end ...")
+  
+

@@ -1,0 +1,21 @@
+let main () =
+  (();
+   if (Array.length Sys.argv) = 0 then () else ();
+   for i = 1 to pred (Array.length Sys.argv) do
+     (try ((); print_endline (Sys.getenv Sys.argv.(i)))
+      with | Not_found -> ())
+   done;
+   ())
+  
+let () =
+  (();
+   (try main ()
+    with
+    | e ->
+        (Bolt.Logger.log "Simple" Bolt.Level.FATAL ~file: "simple.ml"
+           ~line: 20 ~column: 4 ~properties: [] ~error: (Some e)
+           "uncaught exception";
+         Printexc.print_backtrace stdout));
+   ())
+  
+

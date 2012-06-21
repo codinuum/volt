@@ -1,0 +1,4 @@
+File "inv_msg.ml", line 1, characters 21-26:
+Parse error: constant string or module item expected after "LOG"
+File "inv_msg.ml", line 1, characters 0-1:
+Error: Preprocessor error
