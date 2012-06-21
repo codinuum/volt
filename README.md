@@ -2,8 +2,8 @@
 
 ## Overview
 
-This package provides a variant of [Bolt OCaml logging tool](http//bolt.x9c.fr).
-Volt offers the following features in addition to the original:
+This package provides a variant of [Bolt OCaml logging tool](http//bolt.x9c.fr)
+called Volt. Volt offers the following features in addition to the original:
 
 + **Pass filter concept.**
   Each logger has an associated pass filter, ensuring the only events satisfying 
