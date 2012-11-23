@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +18,21 @@
 
 let header = []
 
+let protect s =
+  let len = String.length s in
+  let buf = Buffer.create len in
+  String.iter
+    (fun ch ->
+      match ch with
+      | '<' -> Buffer.add_string buf "&lt;"
+      | '>' -> Buffer.add_string buf "&gt;"
+      | '\"' -> Buffer.add_string buf "&quot;"
+      | '&' -> Buffer.add_string buf "&amp;"
+      | _ -> Buffer.add_char buf ch)
+    s;
+  Buffer.contents buf
+
+
 let protect_cdata s =
   let len = String.length s in
   let buf = Buffer.create len in
@@ -34,11 +49,14 @@ let protect_cdata s =
 let render e =
   let properties =
     List.map
-      (fun (k, v) -> Printf.sprintf "  <log4j:data name=\"%s\" value=\"%s\"/>\n" k v)
+      (fun (k, v) ->
+        Printf.sprintf "  <log4j:data name=\"%s\" value=\"%s\"/>\n"
+          (protect k)
+          (protect v))
       e.Event.properties in
   Event.render_bindings
     (List.map
-       (fun (k, v) -> (k, (if k = "message" then protect_cdata v else v)))
+       (fun (k, v) -> (k, (if k = "message" then protect_cdata v else protect v)))
        (Event.bindings e))
     ("<log4j:event logger=\"$(logger)\" level=\"$(level)\" thread=\"$(thread)\" timestamp=\"$(time)\">\n" ^
      "<log4j:message><![CDATA[$(message)]]></log4j:message>\n" ^
@@ -50,3 +68,11 @@ let render e =
      (String.concat "" properties) ^
      "</log4j:properties>\n" ^
      "</log4j:event>\n")
+
+let layout = header, [], render
+
+let () =
+  List.iter
+    (fun (x, y) -> Layout.register x y)
+    [ "xml",   layout ;
+      "log4j", layout ]

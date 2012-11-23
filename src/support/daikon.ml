@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,9 +25,13 @@ let magic_kind = "Daikon kind\000(magic\001)"
 
 let t = magic_trace
 
-type variable = string * string
+let () = Utils.daikon_t := t
+
+type variable = (string * string) list
 
 type properties = (string * string) list
+
+type 'a variable_builder = string -> 'a -> variable
 
 
 (* Variable constructors *)
@@ -38,43 +42,105 @@ let string_of_bool value =
 let string_of_string value =
   Printf.sprintf "%S" value
 
+let list_of_option = function
+  | Some x -> [ x ]
+  | None -> []
+
 external identity : 'a -> 'a = "%identity"
 
 let make id conv =
   let base =
     fun name value ->
-      (Printf.sprintf ">%c%S" (Char.lowercase id) name),
-      (conv value) in
+      [(Printf.sprintf ">%c%S" (Char.lowercase id) name),
+       (conv value)] in
   let container f =
     fun name value ->
       let value = f value in
-      (Printf.sprintf ">%c%S[..]" (Char.uppercase id) name),
-      (Printf.sprintf "[%s]" (String.concat " " (List.map conv value))) in
+      [(Printf.sprintf ">%c%S[..]" (Char.uppercase id) name),
+       (Printf.sprintf "[%s]" (String.concat " " (List.map conv value)))] in
   base,
+  container list_of_option,
   container identity,
   container Array.to_list
     
-let bool, bool_list, bool_array = make 'b' string_of_bool
+let bool, bool_option, bool_list, bool_array =
+  make 'b' string_of_bool
 
-let int, int_list, int_array = make 'i' string_of_int
+let int, int_option, int_list, int_array =
+  make 'i' string_of_int
 
-let float, float_list, float_array = make 'f' string_of_float
+let float, float_option, float_list, float_array =
+  make 'f' string_of_float
 
-let string, string_list, string_array = make 's' string_of_string
-     
+let string, string_option, string_list, string_array =
+  make 's' string_of_string
+
+
+(* Variable combinators *)
+
+let make_variable_builder f =
+  fun name value ->
+    let vars : variable list = f value in
+    let vars = List.flatten vars in
+    List.map
+      (fun (n, v) ->
+        let insert = name ^ "__" in
+        let len_n = String.length n in
+        let len_insert = String.length insert in
+        let len = len_n + len_insert in
+        let n' = String.create len in
+        String.blit n 0 n' 0 3;
+        String.blit insert 0 n' 3 len_insert;
+        String.blit n 3 n' (3 + len_insert) (len_n - 3);
+        n', v)
+      vars
+
+let tuple2 a_vb b_vb =
+  make_variable_builder
+    (fun (a_v, b_v) ->
+      [ a_vb "0" a_v ;
+        b_vb "1" b_v ])
+
+let tuple3 a_vb b_vb c_vb =
+  make_variable_builder
+    (fun (a_v, b_v, c_v) ->
+      [ a_vb "0" a_v ;
+        b_vb "1" b_v ;
+        c_vb "2" c_v ])
+
+let tuple4 a_vb b_vb c_vb d_vb =
+  make_variable_builder
+    (fun (a_v, b_v, c_v, d_v) ->
+      [ a_vb "0" a_v ;
+        b_vb "1" b_v ;
+        c_vb "2" c_v ;
+        d_vb "3" d_v ])
+
+let tuple5 a_vb b_vb c_vb d_vb e_vb =
+  make_variable_builder
+    (fun (a_v, b_v, c_v, d_v, e_v) ->
+      [ a_vb "0" a_v ;
+        b_vb "1" b_v ;
+        c_vb "2" c_v ;
+        d_vb "3" d_v ;
+        e_vb "4" e_v ])
+
 
 (* Properties constructors *)
 
 let point name l =
-  (magic_kind, name ^ ":::POINT") :: l
+  (magic_kind, name ^ ":::POINT") :: (List.flatten l)
 
 let enter name l =
-  (magic_kind, name ^ ":::ENTER") :: l
+  (magic_kind, name ^ ":::ENTER") :: (List.flatten l)
 
-let exit name (var_name, var_value) l =
-  let var_name = String.copy var_name in
-  var_name.[0] <- '<';
-  (magic_kind, name ^ ":::EXIT1") :: (var_name, var_value) :: l
+let exit name vars l =
+  List.iter
+    (fun (var_name, _) ->
+      let var_name = String.copy var_name in
+      var_name.[0] <- '<')
+    vars;
+  (magic_kind, name ^ ":::EXIT1") :: vars @ (List.flatten l)
 
 
 (* Layout elements *)
@@ -90,7 +156,7 @@ let decls_header = [
 
 let extract_kind l = List.partition (fun (x, _) -> x = magic_kind) l
 
-module StringSet = Set.Make (struct type t = string let compare = Pervasives.compare end)
+module StringSet = Set.Make (String)
 
 let already_seen = ref StringSet.empty
 
@@ -181,3 +247,13 @@ let dtrace_render e =
     | _ -> ""
   else
     ""
+
+let layout_decls = decls_header, [], decls_render
+
+let layout_dtrace = dtrace_header, [], dtrace_render
+
+let () =
+  List.iter
+    (fun (x, y) -> Layout.register x y)
+    [ "daikon_decls",  layout_decls ;
+      "daikon_dtrace", layout_dtrace ]

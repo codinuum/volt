@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,147 +17,93 @@
  *)
 
 
-type t = {
-    name   : string list;
-    level  : Level.t;
-    filter : Filter.t lazy_t;
-    pass   : Filter.t lazy_t;
-    layout : Layout.t lazy_t;
-    output : Output.impl lazy_t;
-  }
-
-let names = Hashtbl.create 17
-
-let normalize_name n =
-  try
-    Hashtbl.find names n
-  with Not_found ->
-    let res = Configuration.normalize n in
-    Hashtbl.replace names n res;
-    res
-
-let loggers = Hashtbl.create 17
-
-let close_all () =
-  Hashtbl.iter
-    (fun _ l ->
-      List.iter (fun x -> (Lazy.force x.output)#close) l)
-    loggers
-
-let () = at_exit close_all
-
-let register_logger name level filter pass layout output (output_name, output_rotate) =
+let register_logger normalized_name level filter pass layout mode output (output_name, output_rotate) =
   let layout = lazy (try Layout.get layout with Not_found -> Layout.default) in
-  let pass = lazy (try Filter.get pass with Not_found -> Filter.all) in
-  let filter = lazy (try Filter.get filter with Not_found -> Filter.all) in
   let output = lazy
       (try
         (Output.get output) output_name output_rotate layout
       with Not_found -> Output.void output_name output_rotate layout) in
-  let logger = { name; level; filter; pass; layout; output; } in
-  let l = try Hashtbl.find loggers name with Not_found -> [] in
-  Hashtbl.replace loggers name (logger :: l)
+  let infos = { Tree.name = normalized_name;
+                level; filter; pass; layout; mode; output; } in
+  Tree.register_logger infos
 
-let register name level filter pass layout output output_params =
-  register_logger (normalize_name name) level filter pass layout output output_params
+let register name level filter pass layout mode output output_params =
+  let normalized_name = Name.of_string name in
+  let filter = lazy (try Filter.get filter with Not_found -> Filter.all) in
+  let pass = lazy (try Filter.get pass with Not_found -> Filter.all) in
+  register_logger normalized_name level filter pass layout mode output output_params
 
-let remove_last l =
-  let rec doit acc = function
-    | [] -> assert false
-    | _ :: [] -> List.rev acc
-    | hd :: tl -> doit (hd :: acc) tl 
-  in
-  doit [] l
-
-let log_event name norm_name level file line column properties error msg =
-  let orig_event = 
-    Event.make name level ~file:file ~line:line ~column:column ~properties:properties ~error:error msg 
-  in
-  let get n = try Hashtbl.find loggers n with Not_found -> [] in
-  let loggers = ref (get norm_name) in
-  let name = ref norm_name in
-  try
-    while !name <> [] do
-      let event = Event.with_logger (String.concat "." !name) orig_event in
+let log_event name level file line column properties error msg =
+  let orig_event =
+    Event.make
+      name
+      level
+      ~file:file
+      ~line:line
+      ~column:column
+      ~properties:properties
+      ~error:error
+      msg in
+  let loggers = Tree.get_loggers name in
+  List.iter
+    (fun (nam, lst) ->
+      let event = Event.with_logger nam orig_event in
       List.iter
-	(fun logger ->
+        (fun logger ->
           try
-            let _, _, layout = Lazy.force logger.layout in
-            let output = Lazy.force logger.output in
-            let filter = Lazy.force logger.filter in
-	    let pass = Lazy.force logger.pass in
-            if (level <= logger.level) && (filter event) then
-              output#write (layout event);
+            let _, _, layout = Lazy.force logger.Tree.layout in
+            let mode = logger.Tree.mode in
+            let output = Lazy.force logger.Tree.output in
+            let filter = Lazy.force logger.Tree.filter in
+	    let pass = Lazy.force logger.Tree.pass in
+            if (level <= logger.Tree.level) && (filter event) then
+              mode#deliver output (layout event);
 	    if not (pass event) then
 	      raise Exit
-          with
-	  | Exit -> raise Exit
-	  | _ -> ()
-	) !loggers;
-      match !name with
-      | [""] ->
-          name := [];
-          loggers := []
-      | _ ->
-          name := remove_last !name;
-          name := if !name = [] then [""] else !name;
-          loggers := get !name
-    done
-  with
-    Exit -> ()
+          with Exit -> raise Exit | _ -> ())
+        lst)
+    loggers
 
 let check_level name level =
 (*
   Printf.fprintf stderr "check_level: \"%s\" %s\n" name (Level.to_string level);
 *)
-  let norm_name = normalize_name name in
-  let get n = try Hashtbl.find loggers n with Not_found -> [] in
-  let loggers = ref (get norm_name) in
-  let name = ref norm_name in
+  let name = Name.of_string name in
+  let loggers = Tree.get_loggers name in
   try
-    while !name <> [] do
-      if List.exists (fun logger -> level <= logger.level) !loggers then
-	raise Exit;
-      match !name with
-      | [""] -> name := []; loggers := []
-      | _ ->
-	  name := remove_last !name;
-	  if !name = [] then name := [""];
-	  loggers := get !name
-    done;
+    List.iter
+      (fun (_, lst) ->
+	if List.exists (fun logger -> level <= logger.Tree.level) lst then
+	  raise Exit
+      ) loggers;
     false
   with
     Exit -> true
 
-
 let logf name level ?(file="") ?(line=(-1)) ?(column=(-1)) ?(properties=[]) ?(error=None) fmt =
   let f msg =
-    Utils.enter_critical_section ();
-    begin
-      try
-	log_event name (normalize_name name) level file line column properties error msg
-      with 
-	e ->
-	  Utils.leave_critical_section ();
-	  raise e
-    end;
-    Utils.leave_critical_section ()
+    let name = Name.of_string name in
+    log_event name level file line column properties error msg
   in
   Printf.ksprintf f fmt
 
 let log name level ?(file="") ?(line=(-1)) ?(column=(-1)) ?(properties=[]) ?(error=None) msg =
-  Utils.enter_critical_section ();
-  (try
-    log_event name (normalize_name name) level file line column properties error msg
-  with e ->
-    Utils.leave_critical_section ();
-    raise e);
-  Utils.leave_critical_section ()
+  let name = Name.of_string name in
+  log_event name level file line column properties error msg
+
+let prepare name =
+  let name = Name.of_string name in
+  Tree.make_node name
 
 let configuration =
+  let get_from_env () =
+    try
+      (Sys.getenv "BOLT_CONFIG"), ConfigurationNew.load
+    with _ ->
+      (Sys.getenv "BOLT_FILE"), ConfigurationOld.load in
   try
-    let file = Sys.getenv "BOLT_FILE" in
-    Some (Configuration.load file)
+    let file, func = get_from_env () in
+    Some (func file)
   with
   | Not_found -> None
   | Configuration.Exception (line, err) ->
@@ -171,25 +117,16 @@ let configuration =
       Utils.verbose "unable to load configuration";
       None
 
-let comma = Str.regexp "[ \t]+,[ \t]+"
-
 let () =
   try
     let plugins_env = Sys.getenv "BOLT_PLUGINS" in
-    let plugins_list = Str.split comma plugins_env in
+    let plugins_list = Utils.split "," plugins_env in
+    let plugins_list = List.map Utils.trim plugins_list in
     List.iter Dynlink.loadfile_private plugins_list
   with _ -> ()
 
-let white_spaces = Str.regexp "[ \t]+"
-
-let signal_of_string s =
-  match String.lowercase s with
-  | "sighup" -> Sys.sighup
-  | "sigusr1" -> Sys.sigusr1
-  | "sigusr2" -> Sys.sigusr2
-  | _ -> failwith "unsupported signal"
-
 let () =
+  let used_signals = Array.make Signal.max_int false in
   let read_lines file =
     try
       let ch = open_in file in
@@ -201,40 +138,161 @@ let () =
       with End_of_file -> ());
       List.rev !res
     with _ -> [] in
+  let rec make_filter = function
+    | Configuration.Identifier s
+    | Configuration.String s ->
+        lazy (try Filter.get s with Not_found -> Filter.all)
+    | Configuration.Integer _
+    | Configuration.Float _ ->
+        lazy Filter.all
+    | Configuration.And (v1, v2) ->
+        let f1 = make_filter v1 in
+        let f2 = make_filter v2 in
+        lazy (fun e -> ((Lazy.force f1) e) && ((Lazy.force f2) e))
+    | Configuration.Or (v1, v2) ->
+        let f1 = make_filter v1 in
+        let f2 = make_filter v2 in
+        lazy (fun e -> ((Lazy.force f1) e) || ((Lazy.force f2) e)) in
   match configuration with
   | Some conf ->
     List.iter
       (fun section ->
         let assoc x = List.assoc x section.Configuration.elements in
-        let level = try Level.of_string (assoc "level") with _ -> Level.FATAL in
-        let filter = try assoc "filter" with _ -> "all" in
-        let pass = try assoc "pass" with _ -> "all" in
+        let assoc_string x =
+          try
+            match List.assoc x section.Configuration.elements with
+            | Configuration.Identifier s
+            | Configuration.String s -> Some s
+            | _ -> None
+          with _ -> None in
+        let level =
+          try
+            match assoc_string "level" with
+            | Some s -> Level.of_string s
+            | None -> Level.FATAL
+          with _ -> Level.FATAL in
+        let filter =
+          try
+            match assoc "filter" with
+            | Configuration.Identifier s
+            | Configuration.String s ->
+                lazy (try Filter.get s with Not_found -> Filter.all)
+            | f -> make_filter f
+          with _ -> lazy Filter.all in
+        let pass =
+          try
+            match assoc "pass" with
+            | Configuration.Identifier s
+            | Configuration.String s ->
+                lazy (try Filter.get s with Not_found -> Filter.all)
+            | f -> make_filter f
+          with _ -> lazy Filter.all in
         let layout =
           try
             match assoc "layout" with
-            | "pattern" ->
-                let header = try read_lines (assoc "pattern-header-file") with _ -> [] in
-                let footer = try read_lines (assoc "pattern-footer-file") with _ -> [] in
-                Layout.register_unnamed (Layout.pattern header footer (assoc "pattern"))
-            | "csv" ->
-                let sep = try assoc "csv-separator" with _ -> ";" in
-                let elems = Str.split white_spaces (assoc "csv-elements") in
+            | Configuration.Identifier "pattern"
+            | Configuration.String "pattern" ->
+                let header =
+                  try
+                    match assoc_string "pattern-header-file" with
+                    | Some s -> read_lines s
+                    | None -> []
+                  with _ -> [] in
+                let footer =
+                  try
+                    match assoc_string "pattern-footer-file" with
+                    | Some s -> read_lines s
+                    | _ -> []
+                  with _ -> [] in
+                let pattern =
+                  match assoc_string "pattern" with
+                  | Some s -> s
+                  | None -> "" in
+                Layout.register_unnamed (Layout.pattern header footer pattern)
+            | Configuration.Identifier "csv"
+            | Configuration.String "csv" ->
+                let sep =
+                  match assoc_string "csv-separator" with
+                  | Some s -> s
+                  | None -> ";" in
+                let list =
+                  match assoc_string "csv-elements" with
+                  | Some s -> s
+                  | None -> "" in
+                let elems = Utils.split " \t" list in
                 Layout.register_unnamed (Layout.csv sep elems)
-            | x -> x
+            | Configuration.Identifier s
+            | Configuration.String s ->
+                s
+            | _ ->
+                "default"
           with _ -> "default" in
-        let output = try assoc "output" with _ -> "file" in
-        let name = try assoc "name" with _ -> "<stderr>" in
-        let seconds = try Some (float_of_string (assoc "rotate")) with _ -> None in
-        let signal = try Some (signal_of_string (assoc "signal")) with _ -> None in
-        (match signal with
-        | Some s ->
-            let f _ =
-              Output.signal := true in
-            Sys.set_signal s (Sys.Signal_handle f)
-        | None -> ());
+        let mode =
+          try
+            match assoc "mode" with
+            | Configuration.Identifier "direct"
+            | Configuration.String "direct" ->
+                Mode.direct ()
+            | Configuration.Identifier "memory"
+            | Configuration.String "memory" ->
+                Mode.memory ()
+            | Configuration.Identifier "retained"
+            | Configuration.String "retained" ->
+                Mode.retained
+                  (match assoc_string "retention" with
+                  | Some s -> s
+                  | None -> "")
+            | _ ->
+                Mode.direct ()
+          with _ -> Mode.direct () in
+        let output =
+          match assoc_string "output" with
+          | Some s -> s
+          | None -> "file" in
+        let name =
+          match assoc_string "name" with
+          | Some s -> s
+          | None -> "<stderr>" in
+        let seconds =
+          try
+            match assoc "rotate" with
+            | Configuration.Integer i ->
+                Some (float_of_int i)
+            | Configuration.Float f ->
+                Some f
+            | Configuration.Identifier s
+            | Configuration.String s ->
+                Some (float_of_string s)
+            | _ ->
+                None
+          with _ -> None in
+        let signal =
+          try
+            match assoc_string "signal" with
+            | Some s ->
+                let s = Signal.of_string s in
+                used_signals.(Signal.to_int s) <- true;
+                Some s
+            | None -> None
+          with _ -> None in
         let rotate = { Output.seconds_elapsed = seconds;
                        Output.signal_caught = signal; } in
-        register_logger section.Configuration.name level filter pass layout output (name, rotate))
-      conf
+        register_logger
+          section.Configuration.name
+          level
+          filter
+	  pass
+          layout
+          mode
+          output
+          (name, rotate))
+      conf;
+      Array.iteri
+        (fun i v ->
+          let handler _ =
+            Output.signals.(i) <- true in
+          let s = Signal.to_sys (Signal.of_int i) in
+          if v then Sys.set_signal s (Sys.Signal_handle handler))
+        used_signals
   | None ->
       ()

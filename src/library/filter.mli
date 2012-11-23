@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** This module defines the concept of filter, that is predicate over an event.
-    It is possible to register new filters through the [register] function.
-    Initially, all the filters defined in this file are registered
-    (using the function name as the registration name). *)
+(** This module defines the concept of filter, that is predicate over an
+    event. It is possible to register new filters through the [register]
+    function. Initially, all the filters defined in this file are
+    registered (using the function name as the registration name). *)
 
 
 (** {6 Definitions} *)
@@ -38,6 +38,7 @@ val register_unnamed : t -> string
 
 val get : string -> t
 (** [get n] returns the filter registered with name [n].
+
     Raises [Not_found] if no filter exists with the passed name. *)
 
 
@@ -81,29 +82,65 @@ val error_or_below : t
 val fatal_or_below : t
 (** Filter that returns [true] iff level is [Level.FATAL] or below. *)
 
+val trace_or_above : t
+(** Filter that returns [true] iff level is [Level.TRACE] or above. *)
+
+val debug_or_above : t
+(** Filter that returns [true] iff level is [Level.DEBUG] or above. *)
+
+val info_or_above : t
+(** Filter that returns [true] iff level is [Level.INFO] or above. *)
+
+val warn_or_above : t
+(** Filter that returns [true] iff level is [Level.WARN] or above. *)
+
+val error_or_above : t
+(** Filter that returns [true] iff level is [Level.ERROR] or above. *)
+
+val fatal_or_above : t
+(** Filter that returns [true] iff level is [Level.FATAL] or above. *)
+
+val level_below : Level.t -> t
+(** [level_equal l] returns a filter that return [true] iff the level is
+    below [l]. *)
+
+val level_above : Level.t -> t
+(** [level_equal l] returns a filter that return [true] iff the level is
+    above [l]. *)
+
+val level_equal : Level.t -> t
+(** [level_equal l] returns a filter that return [true] iff the level is
+    equal to [l]. *)
+
 
 (** {6 Logger filters} *)
 
-val logger_equal : string -> t
-(** [logger_equal f] returns a filter that returns [true] iff file is equal to [f]. *)
+val logger_equal : Name.t -> t
+(** [logger_equal l] returns a filter that returns [true] iff logger is
+    equal to [l]. *)
 
-val logger_not_equal : string -> t
-(** [logger_not_equal f] returns a filter that returns [true] iff file is different from [f]. *)
+val logger_not_equal : Name.t -> t
+(** [logger_not_equal l] returns a filter that returns [true] iff logger
+    is different from [l]. *)
 
 
 (** {6 File filters} *)
 
 val file_defined : t
-(** Filter that returns [true] iff file is different from [""], and ["<nofile>"]. *)
+(** Filter that returns [true] iff file is different from [""], and
+    ["<nofile>"]. *)
 
 val file_undefined : t
-(** Filter that returns [true] iff file is equal to [""], or ["<nofile>"]. *)
+(** Filter that returns [true] iff file is equal to [""], or
+    ["<nofile>"]. *)
 
 val file_equal : string -> t
-(** [file_equal f] returns a filter that returns [true] iff file is equal to [f]. *)
+(** [file_equal f] returns a filter that returns [true] iff file is equal
+    to [f]. *)
 
 val file_not_equal : string -> t
-(** [file_not_equal f] returns a filter that returns [true] iff file is different from [f]. *)
+(** [file_not_equal f] returns a filter that returns [true] iff file is
+    different from [f]. *)
 
 
 (** {6 Position filters} *)
@@ -129,6 +166,18 @@ val message_defined : t
 val message_undefined : t
 (** Filter that returns [true] iff message is equal to [""]. *)
 
+val message_paje : t
+(** Filter that return [true] iff the message is a Pajé one. *)
+
+val message_not_paje : t
+(** Filter that return [true] iff the message is not a Pajé one. *)
+
+val message_daikon : t
+(** Filter that return [true] iff the message is a Daikon one. *)
+
+val message_not_daikon : t
+(** Filter that return [true] iff the message is not a Daikon one. *)
+
 
 (** {6 Property filters} *)
 
@@ -139,28 +188,31 @@ val properties_not_empty : t
 (** Filter that returns [true] iff property list is not empty. *)
 
 val property_defined : string -> t
-(** [property_defined n] returns a filter that returns [true] iff the property
-    named [n] is defined. *)
+(** [property_defined n] returns a filter that returns [true] iff the
+    property named [n] is defined. *)
 
 val property_undefined : string -> t
-(** [property_undefined n] returns a filter that returns [true] iff the property
-    named [n] is not defined. *)
+(** [property_undefined n] returns a filter that returns [true] iff the
+    property named [n] is not defined. *)
 
 val property_equal : string -> string -> t
-(** [property_equal n v] returns a filter that returns [true] iff the property
-    named [n] is defined and has value [v]. *)
+(** [property_equal n v] returns a filter that returns [true] iff the
+    property named [n] is defined and has value [v]. *)
 
 val property_not_equal : string -> string -> t
-(** [property_not_equal n v] returns a filter that returns [true] iff the property
-    named [n] is defined and has a value different from [v], or is not defined. *)
+(** [property_not_equal n v] returns a filter that returns [true] iff the
+    property named [n] is defined and has a value different from [v], or
+    is not defined. *)
 
 val property_equal_pred : string -> (string -> bool) -> t
-(** [property_equal_pred n p] returns a filter that returns [true] iff the property
-    named [n] is defined with value [v], and [p v] equals [true]. *)
+(** [property_equal_pred n p] returns a filter that returns [true] iff
+    the property named [n] is defined with value [v], and [p v] equals
+    [true]. *)
 
 val property_not_equal_pred : string -> (string -> bool) -> t
-(** [property_not_equal_pred n p] returns a filter that returns [true] iff the property
-    named [n] is defined with value [v] and [p v] equals [false], or is not defined. *)
+(** [property_not_equal_pred n p] returns a filter that returns [true]
+    iff the property named [n] is defined with value [v] and [p v] equals
+    [false], or is not defined. *)
 
 
 (** {6 Exception filters} *)
@@ -187,10 +239,25 @@ val (|||) : t -> t -> t
 (** Shorthand for [logor]. *)
 
 val logxor : t -> t -> t
-(** Constructs a filter that is the exclusive disjunction of the passed ones. *)
+(** Constructs a filter that is the exclusive disjunction of the passed
+    ones. *)
 
 val (^^^) : t -> t -> t
 (** Shorthand for [logxor]. *)
 
 val not : t -> t
 (** Constructs a filter that is the negation of the passed one. *)
+
+val for_all : t list -> t
+(** Constructs a filter that returns [true] iff all the filters from the
+    list return [true]. *)
+
+val (!&&&) : t list -> t
+(** Shorthand for [for_all]. *)
+
+val exists : t list -> t
+(** Constructs a filter that returns [true] iff at least one filter from
+    the list returns [true]. *)
+
+val (!|||) : t list -> t
+(** Shorthand for [exists]. *)

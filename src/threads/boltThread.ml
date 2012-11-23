@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by

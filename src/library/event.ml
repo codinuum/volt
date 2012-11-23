@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,48 +34,47 @@ let next_id =
     !id
 
 type t = {
-    id         : int;
-    hostname   : string;
-    process    : int;
-    thread     : int;
-    timestamp  : time;
-    relative   : int;
-    level      : Level.t;
-    logger     : string;
-    origin     : string;
-    file       : string;
-    line       : int;
-    column     : int;
-    message    : string;
+    id : int;
+    hostname : string;
+    process : int;
+    thread : int;
+    timestamp : time;
+    relative : int;
+    level : Level.t;
+    logger : Name.t;
+    origin : Name.t;
+    file : string;
+    line : int;
+    column : int;
+    message : string;
     properties : (string * string) list;
-    error      : (exn * string) option;
+    error : (exn * string) option;
   }
 
-let make logger level 
-    ?(origin = None) 
-    ?(file = "") 
-    ?(line = ~-1)
-    ?(column = ~-1) 
-    ?(properties = []) 
-    ?(error = None) 
-    message 
-    =
+let make logger level ?(origin = None) ?(file = "") ?(line = ~-1)
+    ?(column = ~-1) ?(properties = []) ?(error = None) message =
   let now = current_time () in
-  { id         = next_id ();
-    hostname   = (try Unix.gethostname () with _ -> "");
-    process    = (try Unix.getpid () with _ -> 0);
-    thread     = Utils.get_thread_id ();
-    timestamp  = now;
-    relative   = time (now -. initial_time);
-    level      = level;
-    logger     = String.copy logger;
-    origin     = String.copy (match origin with Some x -> x | None -> logger);
-    file       = String.copy file;
-    line       = line;
-    column     = column;
-    message    = String.copy message;
+  let origin = match origin with
+  | Some x -> x
+  | None -> logger in
+  let error = match error with
+  | Some x -> Some (x, Printexc.get_backtrace ())
+  | None -> None in
+  { id = next_id ();
+    hostname = (try Unix.gethostname () with _ -> "");
+    process = (try Unix.getpid () with _ -> 0);
+    thread = Utils.get_thread_id ();
+    timestamp = now;
+    relative = time (now -. initial_time);
+    level = level;
+    logger = logger;
+    origin = origin;
+    file = String.copy file;
+    line = line;
+    column = column;
+    message = String.copy message;
     properties = properties;
-    error      = match error with Some x -> Some (x, Printexc.get_backtrace ()) | None -> None }
+    error = error }
 
 let with_logger l e =
   { e with logger = l }
@@ -140,8 +139,8 @@ let bindings e =
     "time",       Int64.to_string (time64 e.timestamp);
     "relative",   string_of_int e.relative;
     "level",      Level.to_string e.level;
-    "logger",     e.logger;
-    "origin",     e.origin;
+    "logger",     Name.to_string e.logger;
+    "origin",     Name.to_string e.origin;
     "file",       if e.file <> "" then e.file else String.copy "<nofile>";
     "filebase",   if e.file <> "" then Filename.basename e.file else String.copy "<nofile>";
     "line",       string_of_int e.line;

@@ -1,0 +1,56 @@
+// generated through Bolt 1.3
+
+decl-version 2.0
+input-language OCaml
+var-comparability implicit
+
+ppt f:::ENTER
+ppt-type enter
+  variable "x"
+    var-kind  variable
+    array  0
+    dec-type  int
+    rep-type  int
+    comparability  22
+
+
+ppt f:::EXIT1
+ppt-type exit
+  variable "cc__0"
+    var-kind  variable
+    array  0
+    dec-type  bool
+    rep-type  boolean
+    comparability  22
+  variable "rr__y"
+    var-kind  variable
+    array  0
+    dec-type  float
+    rep-type  double
+    comparability  22
+  variable "res"
+    var-kind  variable
+    array  0
+    dec-type  int
+    rep-type  int
+    comparability  22
+  variable "rr__x"
+    var-kind  variable
+    array  0
+    dec-type  int
+    rep-type  int
+    comparability  22
+  variable "x"
+    var-kind  variable
+    array  0
+    dec-type  int
+    rep-type  int
+    comparability  22
+  variable "cc__1"
+    var-kind  variable
+    array  0
+    dec-type  string
+    rep-type  java.lang.String
+    comparability  22
+
+

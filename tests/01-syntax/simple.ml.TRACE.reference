@@ -1,3 +1,5 @@
+let () = Bolt.Logger.prepare "Simple"
+  
 let main () =
   (Bolt.Logger.log "Simple" Bolt.Level.TRACE ~file: "simple.ml" ~line: 2
      ~column: 2 ~properties: [] ~error: None "entering main";

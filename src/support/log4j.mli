@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,3 +27,7 @@ val header : string list
 
 val render : Event.t -> string
 (** The rendering function for log4j format. *)
+
+val layout : Layout.t
+(** The xml layout, compatible with the one defined by Apache log4j
+    (cf. http://logging.apache.org/log4j/). *)

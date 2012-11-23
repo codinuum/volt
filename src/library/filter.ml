@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,7 @@
 
 type t = Event.t -> bool
 
-let filters, register, register_unnamed, get =
+let _, register, register_unnamed, get =
   Utils.make_container_functions ()
 
 
@@ -52,6 +52,24 @@ let warn_or_below e = e.Event.level <= Level.WARN
 let error_or_below e = e.Event.level <= Level.ERROR
 
 let fatal_or_below e = e.Event.level <= Level.FATAL
+
+let trace_or_above e = e.Event.level >= Level.TRACE
+
+let debug_or_above e = e.Event.level >= Level.DEBUG
+
+let info_or_above e = e.Event.level >= Level.INFO
+
+let warn_or_above e = e.Event.level >= Level.WARN
+
+let error_or_above e = e.Event.level >= Level.ERROR
+
+let fatal_or_above e = e.Event.level >= Level.FATAL
+
+let level_below l e = e.Event.level < l
+
+let level_above l e = e.Event.level > l
+
+let level_equal l e = e.Event.level = l
 
 
 (* Logger filters *)
@@ -88,6 +106,14 @@ let column_undefined e = e.Event.column <= 0
 let message_defined e = e.Event.message <> ""
 
 let message_undefined e = e.Event.message = ""
+
+let message_paje e = e.Event.message = !Utils.paje_t
+
+let message_not_paje e = e.Event.message <> !Utils.paje_t
+
+let message_daikon e = e.Event.message = !Utils.daikon_t
+
+let message_not_daikon e = e.Event.message <> !Utils.daikon_t
 
 
 (* Property filters *)
@@ -132,6 +158,18 @@ let (^^^) = logxor
 
 let not f = fun e -> not (f e)
 
+let for_all l =
+  fun e ->
+    List.for_all (fun f -> f e) l
+
+let (!&&&) = for_all
+
+let exists l =
+  fun e ->
+    List.exists (fun f -> f e) l
+
+let (!|||) = exists
+
 
 let () =
   List.iter
@@ -144,6 +182,12 @@ let () =
       "warn_or_below",        warn_or_below ;
       "error_or_below",       error_or_below ;
       "fatal_or_below",       fatal_or_below ;
+      "trace_or_above",       trace_or_above ;
+      "debug_or_above",       debug_or_above ;
+      "info_or_above",        info_or_above ;
+      "warn_or_above",        warn_or_above ;
+      "error_or_above",       error_or_above ;
+      "fatal_or_above",       fatal_or_above ;
       "file_defined",         file_defined ;
       "file_undefined",       file_undefined ;
       "line_defined",         line_defined ;
@@ -152,6 +196,10 @@ let () =
       "column_undefined",     column_undefined ;
       "message_defined",      message_defined ;
       "message_undefined",    message_undefined ;
+      "message_paje",         message_not_daikon ;
+      "message_not_paje",     message_not_daikon ;
+      "message_daikon",       message_not_daikon ;
+      "message_not_daikon",   message_not_daikon ;
       "properties_empty",     properties_empty ;
       "properties_not_empty", properties_not_empty ;
       "exception_some",       exception_some ;

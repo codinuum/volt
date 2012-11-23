@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** This module defines the various level of log, as well as some utility
-    functions over levels. *)
+(** This module defines the various levels of log, as well as some
+    utility functions over levels. *)
 
 
 type error =
@@ -36,7 +36,8 @@ type t =
 (** The type of logging levels. *)
 
 val levels : t list
-(** The list of all levels, in ascending order. *)
+(** The list of all levels, in ascending order
+    ({i i. e.} from [FATAL] to [TRACE]). *)
 
 val to_string : t -> string
 (** Converts the passed level into a string. *)

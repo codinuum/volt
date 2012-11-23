@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,11 +21,14 @@
 
 type t = (string list) * (string list) * (Event.t -> string)
 
-let layouts, register, register_unnamed, get =
+let _, register, register_unnamed, get =
   Utils.make_container_functions ()
 
 
 (* Predefined layouts *)
+
+let minimal =
+  [], [], Event.render "$(message)"
 
 let simple =
   [], [], Event.render "$(level:5) - $(message)"
@@ -35,18 +38,6 @@ let default =
 
 let pattern h f p =
   h, f, Event.render p
-
-let paje =
-  Paje.header, [], Paje.render
-
-let paje_noheader =
-  [], [], Paje.render
-
-let daikon_decls =
-  Daikon.decls_header, [], Daikon.decls_render
-
-let daikon_dtrace =
-  Daikon.dtrace_header, [], Daikon.dtrace_render
 
 let style = [
   "<style type=\"text/css\">" ;
@@ -105,11 +96,6 @@ let html =
                 "<td>$(message)</td>" ^
                 "</tr>")
 
-let xml =
-  Log4j.header, [], Log4j.render
-
-let log4j = xml
-
 let csv sep l =
   let render e =
     let b = Event.bindings e in
@@ -120,12 +106,7 @@ let csv sep l =
 let () =
   List.iter
     (fun (x, y) -> register x y)
-    [ "simple",        simple ;
+    [ "minimal",       minimal ;
+      "simple",        simple ;
       "default",       default ;
-      "html",          html ;
-      "paje",          paje ;
-      "paje_noheader", paje_noheader ;
-      "daikon_decls",  daikon_decls ;
-      "daikon_dtrace", daikon_dtrace ;
-      "xml",           xml ;
-      "log4j",         xml ]
+      "html",          html ]

@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -59,7 +59,65 @@ let enter_critical_section () =
 let leave_critical_section () =
   !hook_after ()
 
+let split seps s =
+  let idx = ref 0 in
+  let len = String.length s in
+  let buff = Buffer.create len in
+  let res = ref [] in
+  let in_sep = ref false in
+  while !idx < len do
+    if !in_sep then begin
+      if not (String.contains seps s.[!idx]) then begin
+        Buffer.add_char buff s.[!idx];
+        in_sep := false
+      end
+    end else begin
+      if String.contains seps s.[!idx] then begin
+        res := (Buffer.contents buff) :: !res;
+        Buffer.clear buff;
+        in_sep := true
+      end else
+        Buffer.add_char buff s.[!idx]
+    end;
+    incr idx
+  done;
+  let last = Buffer.contents buff in
+  if last <> "" then res := last :: !res;
+  List.rev !res
+
+let is_whitespace = function
+  | ' ' | '\t' | '\r' | '\n' -> true
+  | _ -> false
+
+let trim_gen left right s =
+  let i = ref 0 in
+  let len = String.length s in
+  if left then
+    while (!i < len) && (is_whitespace s.[!i]) do
+      incr i
+    done;
+  let j = ref (pred len) in
+  if right then
+    while (!j >= !i) && (is_whitespace s.[!j]) do
+      decr j
+    done;
+  if j >= i then
+    String.sub s !i (!j - !i + 1)
+  else
+    ""
+
+let trim_left = trim_gen true false
+
+let trim_right = trim_gen false true
+
+let trim = trim_gen true true
+
+
 let register_thread_functions f g h =
   thread_id := f;
   hook_before := g;
   hook_after := h
+
+let paje_t = ref ""
+
+let daikon_t = ref ""

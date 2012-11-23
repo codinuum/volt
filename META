@@ -1,6 +1,6 @@
 description="logging tool"
-requires="camlp4,unix,str,dynlink"
-version="1.2"
+requires="camlp4,unix,dynlink"
+version="1.4"
 
 archive(syntax,preprocessor)="bolt_pp.cmo"
 

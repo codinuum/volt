@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,12 +27,12 @@ class type impl =
 
 type rotation = {
     seconds_elapsed : float option;
-    signal_caught   : int option;
+    signal_caught : Signal.t option;
   }
 
 type t = string -> rotation -> Layout.t lazy_t -> impl
 
-let outputs, register, register_unnamed, get =
+let _, register, register_unnamed, get =
   Utils.make_container_functions ()
 
 
@@ -99,7 +99,7 @@ let open_channel filename h t =
   (try flush ch with _ -> Utils.verbose "unable to write data");
   ch, reg
 
-let signal = ref false
+let signals = Array.make Signal.max_int false
 
 let file filename rot layout =
   let now = Unix.gettimeofday () in
@@ -126,9 +126,12 @@ let file filename rot layout =
                     now -. last_rotate >= x
                 | None -> false)
               || (match r.signal_caught with
-                | Some _ ->
-                    let res = !signal in
-                    signal := false;
+                | Some s ->
+                    let idx = Signal.to_int s in
+                    Utils.enter_critical_section ();
+                    let res = signals.(idx) in
+                    signals.(idx) <- false;
+                    Utils.leave_critical_section ();
                     res
                 | None -> false) in
               if do_rotate then begin
@@ -149,13 +152,41 @@ let file filename rot layout =
 let growlnotify _ _ _ =
   object
     method write msg =
+      let progname = Sys.argv.(0) in
+      let basename = Filename.basename progname in
+      match Sys.os_type with
+      | "Unix" ->
+          (try
+            let command =
+              Printf.sprintf "growlnotify -n %s -t %s -m %S"
+                (Filename.quote progname)
+                (Filename.quote basename)
+                msg in
+            ignore (Sys.command command)
+          with _ -> ())
+      | "Win32" | "Cygwin" ->
+          (try
+            let command =
+              Printf.sprintf "growlnotify.exe /t:%s %S"
+                (Filename.quote basename)
+                msg in
+            ignore (Sys.command command)
+          with _ -> ())
+      | _ -> ()
+    method close = ()
+  end
+
+let bell _ _ _ =
+  object
+    method write _ = print_char '\007'
+    method close = ()
+  end
+
+let say _ _ _ =
+  object
+    method write msg =
       try
-        let progname = Sys.argv.(0) in
-        let basename = Filename.basename progname in
-        let command = Printf.sprintf "growlnotify -n %s -t %s -m %s"
-            (Filename.quote progname)
-            (Filename.quote basename)
-            (Filename.quote msg) in
+        let command = Printf.sprintf "say %S" msg in
         ignore (Sys.command command)
       with _ -> ()
     method close = ()
@@ -166,4 +197,6 @@ let () =
     (fun (x, y) -> register x y)
     [ "void",        void ;
       "file",        file ;
-      "growlnotify", growlnotify ]
+      "growlnotify", growlnotify ;
+      "bell",        bell ;
+      "say",         say ]

@@ -1,6 +1,6 @@
 #
 # This file is part of Bolt.
-# Copyright (C) 2009-2011 Xavier Clerc.
+# Copyright (C) 2009-2012 Xavier Clerc.
 #
 # Bolt is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -48,7 +48,7 @@ compile:
 	@$(COMPILER) -I ../../_build -c -g -for-pack Pack custom.ml
 	@$(COMPILER) -I ../../_build -c -g -pp '$(SYNTAX)' -for-pack Pack aux.ml
 	@$(COMPILER) -I ../../_build -c -g -pp '$(SYNTAX)' -for-pack Pack main.ml
-	@$(COMPILER) -o main.$(EXE_EXT) -g $(EXTRA_ARGS) -I ../../_build unix.$(LIB_EXT) str.$(LIB_EXT) dynlink.$(LIB_EXT) bolt.$(LIB_EXT) custom.$(OBJ_EXT) aux.$(OBJ_EXT) main.$(OBJ_EXT)
+	@$(COMPILER) -o main.$(EXE_EXT) -g $(EXTRA_ARGS) -I ../../_build unix.$(LIB_EXT) dynlink.$(LIB_EXT) bolt.$(LIB_EXT) custom.$(OBJ_EXT) aux.$(OBJ_EXT) main.$(OBJ_EXT)
 
 run:
 	@echo '     testing '$(EXEC)' ...' | tee -a ../_log

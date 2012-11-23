@@ -1,4 +1,4 @@
 File "inv_level.ml", line 1, characters 27-28:
 Failure: "invalid logging level 'X'"
-File "inv_level.ml", line 1, characters 0-1:
+File "inv_level.ml", line 1:
 Error: Preprocessor error

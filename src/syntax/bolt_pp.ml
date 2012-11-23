@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,33 +33,24 @@ let logger_name modname =
   else
     modname
 
+let module_of_file file =
+  let basename = Filename.basename file in
+  String.capitalize (try Filename.chop_extension basename with _ -> basename)
+
 module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
   open Camlp4.Sig
   include Syntax
-
 
   let level_of_string x = (* re-defined here to avoid dependency *)
     let _loc = Loc.ghost in
     match String.uppercase x with
     | "FATAL" -> <:expr< Bolt.Level.FATAL >>, 0
     | "ERROR" -> <:expr< Bolt.Level.ERROR >>, 1
-    | "WARN"  -> <:expr< Bolt.Level.WARN >>, 2
-    | "INFO"  -> <:expr< Bolt.Level.INFO >>, 3
+    | "WARN" -> <:expr< Bolt.Level.WARN >>, 2
+    | "INFO" -> <:expr< Bolt.Level.INFO >>, 3
     | "DEBUG" -> <:expr< Bolt.Level.DEBUG >>, 4
     | "TRACE" -> <:expr< Bolt.Level.TRACE >>, 5
-    | _ -> failwith (Printf.sprintf "invalid logging level '%s'" x)
-
-(*
-  let level_code_of_string x = (* re-defined here to avoid dependency *)
-    match String.uppercase x with
-    | "FATAL" -> Bolt.Level.FATAL
-    | "ERROR" -> Bolt.Level.ERROR
-    | "WARN"  -> Bolt.Level.WARN
-    | "INFO"  -> Bolt.Level.INFO
-    | "DEBUG" -> Bolt.Level.DEBUG
-    | "TRACE" -> Bolt.Level.TRACE
-    | _ -> failwith (Printf.sprintf "invalid logging level '%s'" x)
-*)
+    | _ -> failwith (Printf.sprintf "invalid logging level %S" x)
 
   let level_code_of_int x = (* re-defined here to avoid dependency *)
     match x with
@@ -109,11 +100,10 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
     in
     push, pop, peek
 
-
   type attributes = {
-      error      : Ast.expr option;
+      error : Ast.expr option;
       properties : Ast.expr option;
-      name       : string option;
+      name : string option;
     }
 
   let no_attribute = { error = None; properties = None; name = None; }
@@ -124,25 +114,15 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
     | Some _, _ -> x
     | _, Some _ -> y
     | _ -> None in
-    { error      = m "'exception'" x.error y.error;
+    { error = m "'exception'" x.error y.error;
       properties = m "'properties'" x.properties y.properties;
-      name       = m "'name'" x.name y.name; 
-    }
+      name = m "'name'" x.name y.name; }
 
   let location loc attrs =
     let file = Loc.file_name loc in
-    let basename = Filename.basename file in
-    let logger = 
-      match attrs.name with
-      | Some s -> s
-      | None ->
-	  let n = 
-	    logger_name 
-	      (String.capitalize 
-		 (try Filename.chop_extension basename with _ -> basename)) 
-	  in
-	  n^(peek_context())
-    in
+    let logger = match attrs.name with
+    | Some s -> s
+    | None -> (logger_name (module_of_file file))^(peek_context()) in
     let line = string_of_int (Loc.start_line loc) in
     let column = string_of_int ((Loc.start_off loc) - (Loc.start_bol loc)) in
     logger, file, line, column
@@ -176,7 +156,6 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
         open_bolt _loc e
     | Ast.ExAcc (_, _, _) -> open_bolt _loc e
     | _ -> error ()
-
 
   let _transl transl_ _loc es l lvl =
     let attrs = List.fold_left merge no_attribute l in
@@ -294,18 +273,15 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
 
 
   EXTEND Gram
-    GLOBAL:
-      expr str_item class_declaration class_name_and_param class_str_item 
-      module_binding let_binding
-      ;
-
+    GLOBAL: 
+      expr str_item class_declaration class_name_and_param class_str_item
+      module_binding let_binding;
     attr: [[ ["EXCEPTION" | "EXN"]; e = expr ->
                { no_attribute with error = Some e }
            | "NAME"; s = STRING ->
                { no_attribute with name = Some s }
            | ["PROPERTIES" | "WITH"]; e = expr ->
-               { no_attribute with properties = Some e } 
-	   ]];
+               { no_attribute with properties = Some e } ]];
 
     begin_fatal:
           [[ "BEGIN_FATAL" -> push_lv Bolt.Level.FATAL ]];
@@ -320,23 +296,9 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
     begin_trace:
           [[ "BEGIN_TRACE" -> push_lv Bolt.Level.TRACE ]];
 
-(*
-    begin_level:
-          [[ "BEGIN"; lvl = UIDENT ->
-	    let lc = level_code_of_string lvl in
-	    let lc' =
-	      let cur = peek_level() in
-	      if lc >= cur then cur else lc
-	    in
-	    push_level lc';
-	    lvl
-	   ]];
-*)
-
-    expr: LEVEL "simple"
+    expr: LEVEL "simple" 
           [[ "LOG"; e = expr; l = LIST0 attr; "LEVEL"; lvl = UIDENT ->
 	    transl _loc [e] l lvl
-
            | "FATAL_MSG" ; es = LIST1 expr LEVEL "."; l = LIST0 attr ->
 	     transl_f _loc es l "FATAL"
            | "ERROR_MSG" ; es = LIST1 expr LEVEL "."; l = LIST0 attr ->
@@ -362,34 +324,8 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
 	   | begin_debug; "END_DEBUG" -> pop_level(); <:expr< () >>
 	   | begin_trace; sq = sequence; "END_TRACE" -> transl_block _loc sq "TRACE"
 	   | begin_trace; "END_TRACE" -> pop_level(); <:expr< () >>
-
-(*
-	   | lvl0 = begin_level; sq = sequence; "END"; lvl1 = UIDENT ->
-	     pop_level();
-	     if lvl0 <> lvl1 then
-	       raise (Stream.Error "level of \"BEGIN\" is different from that of \"END\"")
-	     else
-	       let level_code, level_value = level_of_string lvl0 in
-	       if level_value <= !Args.level then
-		 let logger, _, _, _ = location _loc no_attribute in
-		 optimize_check _loc level_code
-		   <:expr< 
-	           (if Bolt.Logger.check_level $str:logger$ $level_code$ then begin $seq:sq$ end)
-	           >>
-	           <:expr< begin $seq:sq$ end >>
-	       else
-		 <:expr< () >>
       
-	   | lvl0 = begin_level; "END"; lvl1 = UIDENT ->
-	     pop_level();
-	     if lvl0 <> lvl1 then
-	       raise (Stream.Error "level of \"BEGIN\" is different from that of \"END\"")
-	     else
-	       <:expr< () >>
-*)
-	   ]];
-
-
+      ]];
     module_ident:
 	  [[ i = a_UIDENT ->
 	    push_context "." i;
@@ -478,22 +414,33 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
 	   ]];
 
   END
-
-
 end
+
+let add_prepare si =
+  if !Args.level >= 0 then begin
+    let open Camlp4.PreCast in
+    let loc = Ast.loc_of_str_item si in
+    let file = Loc.file_name loc in
+    let logger = logger_name (module_of_file file) in
+    let _loc = Loc.ghost in
+    let s = <:str_item< let () = Bolt.Logger.prepare $str:logger$ >> in
+    Ast.StSem (Loc.ghost, s, si)
+  end else
+    si
 
 let () =
   let open Camlp4 in
-  let module Id = struct let name = "Bolt" let version = "1.2" end in
+  let module Id = struct let name = "Bolt" let version = "1.4" end in
   let module M = Register.OCamlSyntaxExtension (Id) (Make) in
+  PreCast.AstFilters.register_str_item_filter add_prepare;
   let levels = [
     "NONE", -1;
     "FATAL", 0;
     "ERROR", 1;
-    "WARN",  2;
-    "INFO",  3;
+    "WARN", 2;
+    "INFO", 3;
     "DEBUG", 4;
-    "TRACE", 5;
+    "TRACE", 5
   ] in
   Options.add
     "-level"

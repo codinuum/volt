@@ -1,6 +1,6 @@
 #
 # This file is part of Bolt.
-# Copyright (C) 2009-2011 Xavier Clerc.
+# Copyright (C) 2009-2012 Xavier Clerc.
 #
 # Bolt is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -22,7 +22,7 @@ true: -traverse
 
 # Options
 <src/**> and not "src/threads/boltThread.ml": for-pack(Bolt)
-"src/syntax/bolt_pp.ml": pp(camlp4of), use_camlp4
+"src/syntax/bolt_pp.ml": pp_camlp4of, use_camlp4
 "src/threads/boltThread.ml": thread
 <src/**/*.ml{,i}>: warnings
 

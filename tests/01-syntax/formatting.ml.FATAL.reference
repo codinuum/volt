@@ -1,3 +1,5 @@
+let () = Bolt.Logger.prepare "Formatting"
+  
 let () =
   (Bolt.Logger.log "Formatting" Bolt.Level.FATAL ~file: "formatting.ml"
      ~line: 2 ~column: 2 ~properties: [] ~error: None "no parameter";

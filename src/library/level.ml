@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -56,8 +56,8 @@ let levels = [
 let to_string = function
   | FATAL -> "FATAL"
   | ERROR -> "ERROR"
-  | WARN  -> "WARN"
-  | INFO  -> "INFO"
+  | WARN -> "WARN"
+  | INFO -> "INFO"
   | DEBUG -> "DEBUG"
   | TRACE -> "TRACE"
 
@@ -65,8 +65,8 @@ let of_string x =
   match String.uppercase x with
   | "FATAL" -> FATAL
   | "ERROR" -> ERROR
-  | "WARN"  -> WARN
-  | "INFO"  -> INFO
+  | "WARN" -> WARN
+  | "INFO" -> INFO
   | "DEBUG" -> DEBUG
   | "TRACE" -> TRACE
   | _ -> fail (Invalid_level_string x)
@@ -74,8 +74,8 @@ let of_string x =
 let to_int = function
   | FATAL -> 0
   | ERROR -> 1
-  | WARN  -> 2
-  | INFO  -> 3
+  | WARN -> 2
+  | INFO -> 3
   | DEBUG -> 4
   | TRACE -> 5
 

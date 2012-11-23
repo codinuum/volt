@@ -1,6 +1,6 @@
 (*
  * This file is part of Bolt.
- * Copyright (C) 2009-2011 Xavier Clerc.
+ * Copyright (C) 2009-2012 Xavier Clerc.
  *
  * Bolt is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -36,7 +36,9 @@ let () =
       (Pathname.readdir sup_path) in
   Array.iter
     (fun filename ->
-      if Pathname.check_extension filename "mli" then begin
+      if (Pathname.check_extension filename "mli")
+    || (Pathname.check_extension filename "mly")
+    || (Pathname.check_extension filename "mll") then begin
         let modulename = Pathname.remove_extension filename in
         let modulename = Pathname.basename modulename in
         let modulename = String.capitalize modulename in
@@ -65,7 +67,15 @@ let () =
     cp src dst in
   dispatch begin function
     | After_rules ->
-        flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
+        let camlp4of =
+          try
+            let path_bin = Filename.concat (Sys.getenv "PATH_OCAML_PREFIX") "bin" in
+            Filename.concat path_bin "camlp4of"
+          with _ -> "camlp4of" in
+        flag ["ocaml"; "compile"; "pp_camlp4of"] (S[A"-pp"; A camlp4of]);
+        flag ["ocaml"; "pp:dep"; "pp_camlp4of"] (S[A camlp4of]);
+        if String.uppercase (try Sys.getenv "WARNINGS" with _ -> "") = "TRUE" then
+          flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
         dep [version_tag] [version_ml];
         rule ("generation of " ^ version_ml)
           ~prod:version_ml

@@ -1,0 +1,44 @@
+[         main.ml 8   ] INFO  - start ...
+[          aux.ml 7   ] INFO  - entering 'f2'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 13  ] INFO  - leaving 'f2'
+[          aux.ml 7   ] INFO  - entering 'f2'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 13  ] INFO  - leaving 'f2'
+[          aux.ml 7   ] INFO  - entering 'f2'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 10  ] TRACE - inside 'f2' loop
+[          aux.ml 2   ] INFO  - entering 'f1'
+[          aux.ml 4   ] INFO  - leaving 'f1'
+[          aux.ml 13  ] INFO  - leaving 'f2'
+[         main.ml 14  ] INFO  - end ...

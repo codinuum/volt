@@ -1,6 +1,6 @@
 #
 # This file is part of Bolt.
-# Copyright (C) 2009-2011 Xavier Clerc.
+# Copyright (C) 2009-2012 Xavier Clerc.
 #
 # Bolt is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -33,6 +33,7 @@ PATH_INSTALL=$(PATH_OCAML_PREFIX)/lib/ocaml/volt
 PROJECT_NAME=bolt
 PROJECT_NAME_=volt
 OCAMLBUILD=$(PATH_OCAML_PREFIX)/bin/ocamlbuild
+OCAMLBUILD_ENV=WARNINGS=$(WARNINGS) PATH_OCAML_PREFIX=$(PATH_OCAML_PREFIX)
 OCAMLBUILD_FLAGS=-classic-display -no-links
 MODULES_ODOCL=$(PROJECT_NAME).odocl
 MODULES_MLPACK=$(PROJECT_NAME).mlpack
@@ -51,12 +52,12 @@ default:
 	@echo "  generate    generates files needed for build"
 
 all: generate
-	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).cmo
-	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).cmx
-	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).otarget
-	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME)_pp.cmo
-	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME)Thread.cmo
-	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME)Thread.cmx
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).cmo
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).cmx
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).otarget
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME)_pp.cmo
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME)Thread.cmo
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME)Thread.cmx
 
 doc: FORCE
 	$(OCAMLBUILD) $(OCAMLBUILD_FLAGS) $(PROJECT_NAME).docdir/index.html
@@ -73,7 +74,7 @@ clean: FORCE
 veryclean: clean
 	rm -f $(PATH_OCAMLDOC)/*.html $(PATH_OCAMLDOC)/*.css
 
-install: all
+install: FORCE
 	if [ -x "$(PATH_OCAMLFIND)" ]; then \
 	  $(PATH_OCAMLFIND) query $(PROJECT_NAME_) && $(PATH_OCAMLFIND) remove $(PROJECT_NAME_) || true; \
 	  $(PATH_OCAMLFIND) install $(PROJECT_NAME_) META -optional \
