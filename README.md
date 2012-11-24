@@ -6,8 +6,9 @@ This package provides a variant of [Bolt OCaml logging tool](http//bolt.x9c.fr)
 called Volt. Volt offers the following features in addition to the original:
 
 + **Pass filter concept.**
-  Each logger has an associated pass filter, ensuring the only events satisfying 
-  the filter will be propagated to the ancestor loggers in the hierarchy.
+  Each logger has an associated pass filter, which ensures that events
+  will never be propagated to the ancestor loggers when the events do
+  not satisfy the filter.
 
 + **Extended implicit logging syntax.**  
   log_expr ::= ...  
