@@ -45,24 +45,27 @@ let log_event name level file line column properties error msg =
       ~error:error
       msg in
   let loggers = Tree.get_loggers name in
-  List.iter
-    (fun (nam, lst) ->
-      let event = Event.with_logger nam orig_event in
-      List.iter
-        (fun logger ->
-          try
-            let _, _, layout = Lazy.force logger.Tree.layout in
-            let mode = logger.Tree.mode in
-            let output = Lazy.force logger.Tree.output in
-            let filter = Lazy.force logger.Tree.filter in
-	    let pass = Lazy.force logger.Tree.pass in
-            if (level <= logger.Tree.level) && (filter event) then
-              mode#deliver output (layout event);
-	    if not (pass event) then
-	      raise Exit
-          with Exit -> raise Exit | _ -> ())
-        lst)
-    loggers
+  try
+    List.iter
+      (fun (nam, lst) ->
+	let event = Event.with_logger nam orig_event in
+	List.iter
+          (fun logger ->
+            try
+              let _, _, layout = Lazy.force logger.Tree.layout in
+              let mode = logger.Tree.mode in
+              let output = Lazy.force logger.Tree.output in
+              let filter = Lazy.force logger.Tree.filter in
+	      let pass = Lazy.force logger.Tree.pass in
+              if (level <= logger.Tree.level) && (filter event) then
+		mode#deliver output (layout event);
+	      if not (pass event) then
+		raise Exit
+            with Exit -> raise Exit | _ -> ())
+          lst)
+      loggers
+  with
+    Exit -> ()
 
 let check_level name level =
 (*
