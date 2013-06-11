@@ -267,14 +267,17 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
 
   DELETE_RULE Gram str_item: "module"; a_UIDENT; module_binding0 END;
   DELETE_RULE Gram class_declaration: class_info_for_class_expr; class_fun_binding END;
+  DELETE_RULE Gram class_description: class_info_for_class_type; ":"; class_type_plus END;
+  DELETE_RULE Gram class_type_declaration: class_info_for_class_type; "="; class_type END;
   DELETE_RULE Gram class_name_and_param: "["; comma_type_parameter; "]"; a_LIDENT  END;
   DELETE_RULE Gram class_name_and_param: a_LIDENT END;
   DELETE_RULE Gram module_binding: a_UIDENT; ":"; module_type; "="; module_expr END;
 
 
   EXTEND Gram
-    GLOBAL: 
-      expr str_item class_declaration class_name_and_param class_str_item
+    GLOBAL:
+      expr str_item class_declaration class_type_declaration class_description
+      class_name_and_param class_str_item
       module_binding let_binding;
     attr: [[ ["EXCEPTION" | "EXN"]; e = expr ->
                { no_attribute with error = Some e }
@@ -295,6 +298,7 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
           [[ "BEGIN_DEBUG" -> push_lv Bolt.Level.DEBUG ]];
     begin_trace:
           [[ "BEGIN_TRACE" -> push_lv Bolt.Level.TRACE ]];
+
 
     expr: LEVEL "simple" 
           [[ "LOG"; e = expr; l = LIST0 attr; "LEVEL"; lvl = UIDENT ->
@@ -380,6 +384,21 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
 	    pop_context();
 	    <:class_expr< $ci$ = $ce$ >>
 	   ]];
+
+    class_type_declaration:
+          [ LEFTA [ ci = class_info_for_class_type; "="; ct = class_type -> 
+            pop_context();
+            Syntax.Ast.CtEq(_loc, ci, ct)
+(*            <:class_type< $ci$ = $ct$ >> *)
+           ]];
+
+    class_description:
+          [[ ci = class_info_for_class_type; ":"; ct = class_type_plus -> 
+            pop_context();
+            Syntax.Ast.CtEq(_loc, ci, ct)
+(*            <:class_type< $ci$ : $ct$ >> *)
+           ]];
+
 
     method_opt_override:
           [[ "method"; "!" -> <:override_flag< ! >>
