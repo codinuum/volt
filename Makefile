@@ -86,6 +86,7 @@ install: FORCE
 	    $(PATH_BUILD)/$(PROJECT_NAME).cma \
 	    $(PATH_BUILD)/$(PROJECT_NAME).cmi \
 	    $(PATH_BUILD)/$(PROJECT_NAME).cmo \
+	    $(PATH_BUILD)/$(PROJECT_NAME).cmx \
 	    $(PATH_BUILD)/$(PROJECT_NAME).cmxa \
 	    $(PATH_BUILD)/$(PROJECT_NAME).cmja \
 	    $(PATH_BUILD)/$(PROJECT_NAME).ja; \
