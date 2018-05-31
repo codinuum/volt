@@ -51,12 +51,12 @@ external identity : 'a -> 'a = "%identity"
 let make id conv =
   let base =
     fun name value ->
-      [(Printf.sprintf ">%c%S" (Char.lowercase id) name),
+      [(Printf.sprintf ">%c%S" (Char.lowercase_ascii id) name),
        (conv value)] in
   let container f =
     fun name value ->
       let value = f value in
-      [(Printf.sprintf ">%c%S[..]" (Char.uppercase id) name),
+      [(Printf.sprintf ">%c%S[..]" (Char.uppercase_ascii id) name),
        (Printf.sprintf "[%s]" (String.concat " " (List.map conv value)))] in
   base,
   container list_of_option,
@@ -88,11 +88,11 @@ let make_variable_builder f =
         let len_n = String.length n in
         let len_insert = String.length insert in
         let len = len_n + len_insert in
-        let n' = String.create len in
+        let n' = Bytes.create len in
         String.blit n 0 n' 0 3;
         String.blit insert 0 n' 3 len_insert;
         String.blit n 3 n' (3 + len_insert) (len_n - 3);
-        n', v)
+        Bytes.to_string n', v)
       vars
 
 let tuple2 a_vb b_vb =
@@ -135,11 +135,11 @@ let enter name l =
   (magic_kind, name ^ ":::ENTER") :: (List.flatten l)
 
 let exit name vars l =
+  let _vars = List.map (fun (x, y) -> Bytes.of_string x, y) vars in
   List.iter
-    (fun (var_name, _) ->
-      let var_name = String.copy var_name in
-      var_name.[0] <- '<')
-    vars;
+    (fun (var_name, _) -> Bytes.set var_name 0 '<')
+    _vars;
+  let vars = List.map (fun (x, y) -> Bytes.to_string x, y) _vars in
   (magic_kind, name ^ ":::EXIT1") :: vars @ (List.flatten l)
 
 
