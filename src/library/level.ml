@@ -62,7 +62,7 @@ let to_string = function
   | TRACE -> "TRACE"
 
 let of_string x =
-  match String.uppercase x with
+  match String.uppercase_ascii x with
   | "FATAL" -> FATAL
   | "ERROR" -> ERROR
   | "WARN" -> WARN

@@ -41,7 +41,7 @@ let () =
     || (Pathname.check_extension filename "mll") then begin
         let modulename = Pathname.remove_extension filename in
         let modulename = Pathname.basename modulename in
-        let modulename = String.capitalize modulename in
+        let modulename = String.capitalize_ascii modulename in
         output_string odocl_chan modulename;
         output_char odocl_chan '\n';
         if not (List.mem modulename ignore_modules) then begin
@@ -74,7 +74,7 @@ let () =
           with _ -> "camlp4of" in
         flag ["ocaml"; "compile"; "pp_camlp4of"] (S[A"-pp"; A camlp4of]);
         flag ["ocaml"; "pp:dep"; "pp_camlp4of"] (S[A camlp4of]);
-        if String.uppercase (try Sys.getenv "WARNINGS" with _ -> "") = "TRUE" then
+        if String.uppercase_ascii (try Sys.getenv "WARNINGS" with _ -> "") = "TRUE" then
           flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
         dep [version_tag] [version_ml];
         rule ("generation of " ^ version_ml)

@@ -195,8 +195,8 @@ let decls_render e =
             (fun (k, _) ->
               try
                 let kind = if k.[0] = '<' then "return" else "variable" in
-                let dim = if k.[1] = (Char.lowercase k.[1]) then 0 else 1 in
-                let dec, rep = match Char.lowercase k.[1] with
+                let dim = if k.[1] = (Char.lowercase_ascii k.[1]) then 0 else 1 in
+                let dec, rep = match Char.lowercase_ascii k.[1] with
                 | 'i' -> "int", "int"
                 | 'b' -> "bool", "boolean"
                 | 'f' -> "float", "double"

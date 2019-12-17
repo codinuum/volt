@@ -69,10 +69,10 @@ let make logger level ?(origin = None) ?(file = "") ?(line = ~-1)
     level = level;
     logger = logger;
     origin = origin;
-    file = String.copy file;
+    file = file;
     line = line;
     column = column;
-    message = String.copy message;
+    message = message;
     properties = properties;
     error = error }
 
@@ -141,8 +141,8 @@ let bindings e =
     "level",      Level.to_string e.level;
     "logger",     Name.to_string e.logger;
     "origin",     Name.to_string e.origin;
-    "file",       if e.file <> "" then e.file else String.copy "<nofile>";
-    "filebase",   if e.file <> "" then Filename.basename e.file else String.copy "<nofile>";
+    "file",       if e.file <> "" then e.file else "<nofile>";
+    "filebase",   if e.file <> "" then Filename.basename e.file else "<nofile>";
     "line",       string_of_int e.line;
     "column",     string_of_int e.column;
     "message",    e.message;

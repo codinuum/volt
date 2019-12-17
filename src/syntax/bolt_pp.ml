@@ -35,7 +35,7 @@ let logger_name modname =
 
 let module_of_file file =
   let basename = Filename.basename file in
-  String.capitalize (try Filename.chop_extension basename with _ -> basename)
+  String.capitalize_ascii (try Filename.chop_extension basename with _ -> basename)
 
 module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
   open Camlp4.Sig
@@ -43,7 +43,7 @@ module Make (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
 
   let level_of_string x = (* re-defined here to avoid dependency *)
     let _loc = Loc.ghost in
-    match String.uppercase x with
+    match String.uppercase_ascii x with
     | "FATAL" -> <:expr< Bolt.Level.FATAL >>, 0
     | "ERROR" -> <:expr< Bolt.Level.ERROR >>, 1
     | "WARN" -> <:expr< Bolt.Level.WARN >>, 2

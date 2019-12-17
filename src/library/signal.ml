@@ -44,7 +44,7 @@ let fail error =
   raise (Exception error)
 
 let of_string s =
-  match String.lowercase s with
+  match String.lowercase_ascii s with
   | "sighup" -> HUP
   | "sigusr1" -> USR1
   | "sigusr2" -> USR2

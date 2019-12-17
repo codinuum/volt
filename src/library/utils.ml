@@ -21,7 +21,7 @@ let verbose s =
     prerr_string " *** Bolt: ";
     prerr_endline s in
   try
-    match String.uppercase (Sys.getenv "BOLT_SILENT") with
+    match String.uppercase_ascii (Sys.getenv "BOLT_SILENT") with
     | "YES" | "ON" -> ()
     | _ -> print s
   with Not_found -> print s
