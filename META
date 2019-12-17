@@ -1,5 +1,5 @@
 description="logging tool"
-requires="camlp4,unix,dynlink"
+requires="camlp4"
 version="1.4"
 
 archive(syntax,preprocessor)="bolt_pp.cmo"
