@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+set -e
+
 # default values
 ocamlbuild=`which ocamlbuild || echo '/usr/local/bin/ocamlbuild'`
 bin_path=`dirname $ocamlbuild`
