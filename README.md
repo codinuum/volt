@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package provides a variant of [Bolt OCaml logging tool](http//bolt.x9c.fr)
+This package provides a variant of [Bolt OCaml logging tool](https://bolt.x9c.fr/)
 called Volt. Volt offers the following features in addition to the original:
 
 + **Pass filter concept.**
